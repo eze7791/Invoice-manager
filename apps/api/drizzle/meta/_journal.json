@@ -15,6 +15,13 @@
       "when": 1794081980486,
       "tag": "0001_direccion_2",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794082767118,
+      "tag": "0002_instrucciones_pago",
+      "breakpoints": true
     }
   ]
 }

@@ -122,6 +122,7 @@ export const issuers = pgTable("issuers", {
   bankName: text("bank_name"),
   iban: text("iban"),
   bankAddress: text("bank_address"),
+  paymentInstructions: text("payment_instructions"),
   defaultPaymentMethod: paymentMethod("default_payment_method").notNull().default("transferencia"),
   // Fiscal
   defaultIrpfRate: rate("default_irpf_rate").notNull().default("15.00"),
@@ -231,6 +232,7 @@ export const invoices = pgTable(
     clientSnapshot: jsonb("client_snapshot"),
     notes: text("notes"),
     paymentMethod: paymentMethod("payment_method"),
+    paymentInstructions: text("payment_instructions"),
     // Pago
     paidAt: timestamp("paid_at", { withTimezone: true }),
     paidMethod: paymentMethod("paid_method"),

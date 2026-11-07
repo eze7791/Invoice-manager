@@ -51,6 +51,7 @@ export const profileSchema = z.object({
   bankName: optionalText(),
   iban: optionalIban,
   bankAddress: optionalText(),
+  paymentInstructions: optionalText(500),
   defaultPaymentMethod: z.enum(["transferencia", "efectivo"]),
   defaultIrpfRate: z.coerce.number().min(0).max(100).transform((v) => v.toFixed(2)),
   vatExemptionText: requiredText(500),
@@ -108,6 +109,7 @@ export const invoiceDraftSchema = z.object({
   irpfRate: z.coerce.number().min(0).max(100),
   paymentMethod: z.enum(["transferencia", "efectivo"]),
   notes: optionalText(2000),
+  paymentInstructions: optionalText(500),
   rectificationReason: optionalText(500),
   lines: z.array(invoiceLineSchema).max(100),
 });

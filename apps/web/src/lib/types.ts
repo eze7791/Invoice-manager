@@ -18,6 +18,7 @@ export type Profile = {
   bankName: string | null;
   iban: string | null;
   bankAddress: string | null;
+  paymentInstructions: string | null;
   defaultPaymentMethod: PaymentMethod;
   defaultIrpfRate: string;
   vatExemptionText: string;
@@ -110,6 +111,7 @@ export type InvoiceDetail = {
   irpfTotal: string;
   grandTotal: string;
   notes: string | null;
+  paymentInstructions: string | null;
   paymentMethod: PaymentMethod | null;
   paidAt: string | null;
   paidMethod: PaymentMethod | null;

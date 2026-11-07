@@ -36,6 +36,7 @@ type Draft = {
   irpfRate: string;
   paymentMethod: PaymentMethod;
   notes: string;
+  paymentInstructions: string;
   rectificationReason: string;
   lines: InvoiceLine[];
 };
@@ -75,6 +76,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
       irpfRate: String(rate > 0 ? rate : Number(profile.defaultIrpfRate)),
       paymentMethod: invoice.paymentMethod ?? profile.defaultPaymentMethod,
       notes: invoice.notes ?? "",
+      paymentInstructions: invoice.paymentInstructions ?? "",
       rectificationReason: invoice.rectificationReason ?? "",
       lines: invoice.lines,
     };
@@ -90,6 +92,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
     irpfRate: String(Number(profile.defaultIrpfRate)),
     paymentMethod: profile.defaultPaymentMethod,
     notes: "",
+    paymentInstructions: profile.paymentInstructions ?? "",
     rectificationReason: "",
     lines: [],
   };
@@ -140,6 +143,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
     irpfRate: Number(irpfRate),
     paymentMethod: draft.paymentMethod,
     notes: draft.notes,
+    paymentInstructions: draft.paymentInstructions,
     rectificationReason: draft.rectificationReason,
     lines: draft.lines.map((l) => ({
       description: l.description,
@@ -212,9 +216,9 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
         </FormSection>
       )}
 
-      <FormSection title="Fechas">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Fecha de emisión" htmlFor="issueDate" hint="El número se asigna al emitir.">
+      <FormSection title="Fechas" description="El número de factura se asigna al emitir.">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          <Field label="Fecha de emisión" htmlFor="issueDate">
             <Input
               id="issueDate"
               type="date"
@@ -246,7 +250,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
               onChange={(e) => set("dueDate", e.target.value || null)}
             />
           </Field>
-          <label className="flex items-end justify-between gap-2 pb-2 text-sm">
+          <label className="flex items-center justify-between gap-2 text-sm sm:h-full sm:pt-6">
             Sin vencimiento
             <Switch
               checked={draft.dueDate === null}
@@ -393,6 +397,19 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
           <ToggleGroupItem value="transferencia" className="flex-1">Transferencia</ToggleGroupItem>
           <ToggleGroupItem value="efectivo" className="flex-1">Efectivo</ToggleGroupItem>
         </ToggleGroup>
+        <Field
+          label="Instrucciones de pago"
+          htmlFor="paymentInstructions"
+          hint="Aparecen al pie de la factura, junto a tus datos bancarios."
+        >
+          <Textarea
+            id="paymentInstructions"
+            rows={3}
+            placeholder="Pago por transferencia indicando el número de factura."
+            value={draft.paymentInstructions}
+            onChange={(e) => set("paymentInstructions", e.target.value)}
+          />
+        </Field>
         <Field label="Observaciones" htmlFor="notes" hint="Aparecen en la factura.">
           <Textarea
             id="notes"

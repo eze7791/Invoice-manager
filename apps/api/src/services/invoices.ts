@@ -77,6 +77,7 @@ function draftValues(input: InvoiceDraftInput) {
     irpfRate: input.irpfRate.toFixed(2),
     paymentMethod: input.paymentMethod,
     notes: input.notes,
+    paymentInstructions: input.paymentInstructions,
     rectificationReason: input.rectificationReason,
     // Los totales del borrador se guardan para mostrarlos en el listado; se recalculan al emitir.
     ...computeTotals(input.lines, input.irpfRate),
@@ -303,6 +304,7 @@ async function copyAsDraft(
       irpfRate: source.irpfRate,
       paymentMethod: source.paymentMethod,
       notes: source.notes,
+      paymentInstructions: source.paymentInstructions,
       issueDate: today,
       dueDate: dueDate.toISOString().slice(0, 10),
       taxableBase: source.taxableBase,

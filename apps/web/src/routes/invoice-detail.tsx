@@ -284,6 +284,12 @@ export function InvoiceDetailPage() {
         </dl>
         {inv.vatExemptionText && <p className="border-t px-4 py-3 text-xs text-muted-foreground">{inv.vatExemptionText}</p>}
         {inv.notes && <p className="border-t px-4 py-3 text-sm whitespace-pre-line">{inv.notes}</p>}
+        {inv.paymentInstructions && (
+          <div className="border-t px-4 py-3 text-sm">
+            <div className="text-xs font-medium text-muted-foreground">Instrucciones de pago</div>
+            <p className="whitespace-pre-line">{inv.paymentInstructions}</p>
+          </div>
+        )}
       </section>
 
       <PaymentSheet open={paying} onOpenChange={setPaying} invoice={inv} onDone={refresh} />

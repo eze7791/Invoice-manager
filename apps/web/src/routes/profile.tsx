@@ -40,6 +40,7 @@ const toValues = (p: Profile): ProfileValues => ({
   bankName: p.bankName ?? "",
   iban: p.iban ?? "",
   bankAddress: p.bankAddress ?? "",
+  paymentInstructions: p.paymentInstructions ?? "",
   defaultPaymentMethod: p.defaultPaymentMethod,
   defaultIrpfRate: Number(p.defaultIrpfRate),
   vatExemptionText: p.vatExemptionText,
@@ -218,6 +219,18 @@ function ProfileForm({ profile }: { profile: Profile }) {
             <Input id="bankAddress" placeholder="Calle Mayor 1, Barcelona" {...register("bankAddress")} />
           </Field>
         </div>
+        <Field
+          label="Instrucciones de pago"
+          htmlFor="paymentInstructions"
+          hint="Texto libre que aparece al pie de cada factura. Se puede cambiar en cada una."
+        >
+          <Textarea
+            id="paymentInstructions"
+            rows={3}
+            placeholder="Pago por transferencia indicando el número de factura, o Bizum al 612 345 678."
+            {...register("paymentInstructions")}
+          />
+        </Field>
       </FormSection>
 
       <FormSection title="Facturación" description="Valores por defecto para cada factura nueva. Se pueden cambiar en cada una.">
