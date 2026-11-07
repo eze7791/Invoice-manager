@@ -29,6 +29,7 @@ const toValues = (p: Profile): ProfileValues => ({
   tradeName: p.tradeName ?? "",
   nif: p.nif,
   street: p.street,
+  street2: p.street2 ?? "",
   postalCode: p.postalCode,
   city: p.city,
   province: p.province,
@@ -136,8 +137,11 @@ function ProfileForm({ profile }: { profile: Profile }) {
       </FormSection>
 
       <FormSection title="Domicilio fiscal">
-        <Field label="Dirección" htmlFor="street" error={errors.street?.message}>
-          <Input id="street" placeholder="Calle Mayor 12, 3º 1ª" autoComplete="street-address" {...register("street")} />
+        <Field label="Dirección" htmlFor="street" hint="Vía y número" error={errors.street?.message}>
+          <Input id="street" placeholder="Calle Mayor 12" autoComplete="address-line1" {...register("street")} />
+        </Field>
+        <Field label="Dirección 2" htmlFor="street2" hint="Opcional: piso, puerta, escalera, bloque o urbanización.">
+          <Input id="street2" placeholder="3º 1ª, escalera B" autoComplete="address-line2" {...register("street2")} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Código postal" htmlFor="postalCode" error={errors.postalCode?.message}>

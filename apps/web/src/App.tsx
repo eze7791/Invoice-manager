@@ -2,7 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppLayout } from "@/components/app-layout";
 import { LoginPage } from "@/routes/login";
 import { ClientsPage } from "@/routes/clients";
-import { InvoicesPage } from "@/routes/placeholders";
+import { InvoiceDetailPage } from "@/routes/invoice-detail";
+import { InvoiceEditorPage } from "@/routes/invoice-editor";
+import { InvoicesPage } from "@/routes/invoices";
 import { ProfilePage } from "@/routes/profile";
 
 export default function App() {
@@ -12,6 +14,9 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<AppLayout />}>
           <Route index element={<InvoicesPage />} />
+          <Route path="facturas/nueva" element={<InvoiceEditorPage />} />
+          <Route path="facturas/:id" element={<InvoiceDetailPage />} />
+          <Route path="facturas/:id/editar" element={<InvoiceEditorPage />} />
           <Route path="clientes" element={<ClientsPage />} />
           <Route path="perfil" element={<ProfilePage />} />
         </Route>

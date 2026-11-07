@@ -2,7 +2,7 @@
 
 App web privada para que un autónomo en España gestione clientes, emita facturas en PDF y exporte todo para su gestoría. Pensada para usarse desde el móvil (PWA) y alojada a coste cero en Cloudflare.
 
-> Estado: **fase 2** (perfil del emisor y clientes). Ver [Hoja de ruta](#hoja-de-ruta).
+> Estado: **fase 3** (facturas, rectificativas y pagos). Ver [Hoja de ruta](#hoja-de-ruta).
 
 ## Stack
 
@@ -75,6 +75,6 @@ npm run db:generate    # nueva migración tras cambiar el esquema
 
 1. ✅ Infraestructura, esquema de base de datos y login
 2. ✅ Perfil del emisor y clientes
-3. Facturas: conceptos, IRPF, emisión, rectificativas, pagos
+3. ✅ Facturas: conceptos, IRPF, emisión, rectificativas, pagos
 4. PDF, envío por email y exportación para la gestoría
 5. Dashboard, historial con filtros, PWA y despliegue

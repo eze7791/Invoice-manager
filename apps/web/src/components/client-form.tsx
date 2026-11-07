@@ -16,6 +16,7 @@ export type ClientFormValues = {
   email: string;
   phone: string;
   street: string;
+  street2: string;
   postalCode: string;
   city: string;
   province: string;
@@ -32,6 +33,7 @@ const toValues = (c?: Client): ClientFormValues => ({
   email: c?.email ?? "",
   phone: c?.phone ?? "",
   street: c?.street ?? "",
+  street2: c?.street2 ?? "",
   postalCode: c?.postalCode ?? "",
   city: c?.city ?? "",
   province: c?.province ?? "",
@@ -117,8 +119,11 @@ export function ClientForm({
         </Field>
       </div>
 
-      <Field label="Dirección" htmlFor="street" error={errors.street?.message}>
-        <Input id="street" placeholder="Calle Mayor 12, 3º 1ª" {...register("street")} />
+      <Field label="Dirección" htmlFor="street" hint="Vía y número" error={errors.street?.message}>
+        <Input id="street" placeholder="Calle Mayor 12" {...register("street")} />
+      </Field>
+      <Field label="Dirección 2" htmlFor="street2" hint="Opcional: piso, puerta, escalera, bloque o urbanización.">
+        <Input id="street2" placeholder="3º 1ª, escalera B" {...register("street2")} />
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Código postal" htmlFor="postalCode" error={errors.postalCode?.message}>
