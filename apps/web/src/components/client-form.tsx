@@ -89,15 +89,15 @@ export function ClientForm({
       {type === "particular" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre *" htmlFor="firstName" error={errors.firstName?.message}>
-            <Input id="firstName" placeholder="Lucía" autoComplete="off" {...register("firstName")} />
+            <Input id="firstName" placeholder="Ej.: Lucía" autoComplete="off" {...register("firstName")} />
           </Field>
           <Field label="Apellidos" htmlFor="lastName" error={errors.lastName?.message}>
-            <Input id="lastName" placeholder="Martín García" autoComplete="off" {...register("lastName")} />
+            <Input id="lastName" placeholder="Ej.: Martín García" autoComplete="off" {...register("lastName")} />
           </Field>
         </div>
       ) : (
         <Field label="Razón social *" htmlFor="companyName" error={errors.companyName?.message}>
-          <Input id="companyName" placeholder="Clínica Ejemplo SL" autoComplete="off" {...register("companyName")} />
+          <Input id="companyName" placeholder="Ej.: Clínica Ejemplo SL" autoComplete="off" {...register("companyName")} />
         </Field>
       )}
 
@@ -107,36 +107,36 @@ export function ClientForm({
         error={errors.nif?.message}
         hint="Opcional. DNI: 8 números + letra. NIE: X, Y o Z + 7 números + letra."
       >
-        <Input id="nif" placeholder="12345678Z · X1234567L · B12345674" autoComplete="off" className="uppercase" {...register("nif")} />
+        <Input id="nif" placeholder="Ej.: 12345678Z · X1234567L · B12345674" autoComplete="off" className="uppercase" {...register("nif")} />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Email" htmlFor="email" error={errors.email?.message} hint="Para enviarle la factura.">
-          <Input id="email" placeholder="nombre@correo.es" type="email" inputMode="email" autoComplete="off" {...register("email")} />
+          <Input id="email" placeholder="Ej.: nombre@correo.es" type="email" inputMode="email" autoComplete="off" {...register("email")} />
         </Field>
         <Field label="Teléfono" htmlFor="phone" error={errors.phone?.message}>
-          <Input id="phone" placeholder="612 345 678" type="tel" inputMode="tel" autoComplete="off" {...register("phone")} />
+          <Input id="phone" placeholder="Ej.: 612 345 678" type="tel" inputMode="tel" autoComplete="off" {...register("phone")} />
         </Field>
       </div>
 
       <Field label="Dirección" htmlFor="street" hint="Vía y número" error={errors.street?.message}>
-        <Input id="street" placeholder="Calle Mayor 12" {...register("street")} />
+        <Input id="street" placeholder="Ej.: Calle Mayor 12" {...register("street")} />
       </Field>
       <Field label="Dirección 2" htmlFor="street2" hint="Opcional: piso, puerta, escalera, bloque o urbanización.">
-        <Input id="street2" placeholder="3º 1ª, escalera B" {...register("street2")} />
+        <Input id="street2" placeholder="Ej.: 3º 1ª, escalera B" {...register("street2")} />
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Código postal" htmlFor="postalCode" error={errors.postalCode?.message}>
-          <Input id="postalCode" placeholder="08001" inputMode="numeric" {...register("postalCode")} />
+          <Input id="postalCode" placeholder="Ej.: 08001" inputMode="numeric" {...register("postalCode")} />
         </Field>
         <Field label="Ciudad" htmlFor="city" error={errors.city?.message}>
-          <Input id="city" placeholder="Barcelona" {...register("city")} />
+          <Input id="city" placeholder="Ej.: Barcelona" {...register("city")} />
         </Field>
         <Field label="Provincia" htmlFor="province" error={errors.province?.message}>
-          <Input id="province" placeholder="Barcelona" {...register("province")} />
+          <Input id="province" placeholder="Ej.: Barcelona" {...register("province")} />
         </Field>
         <Field label="País" htmlFor="country" error={errors.country?.message}>
-          <Input id="country" placeholder="España" {...register("country")} />
+          <Input id="country" placeholder="Ej.: España" {...register("country")} />
         </Field>
       </div>
 

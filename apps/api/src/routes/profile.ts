@@ -1,6 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { setIssuerFile, updateProfile, type FileKind } from "../services/profile";
+import { connectMailAccount, disconnectMailAccount, mailAccountFor, requireAccount, sendMail } from "../services/email";
+import { getIssuerByUserId, setIssuerFile, updateProfile, type FileKind } from "../services/profile";
+import { z } from "zod";
 import type { AppEnv } from "../types";
 import { profileSchema } from "../validation";
 import { validationHook } from "./validation-hook";
@@ -13,8 +15,8 @@ const isFileKind = (v: string): v is FileKind => v === "logo" || v === "signatur
 
 /** Quita las claves internas de R2 y expone si hay logo o firma. */
 function present(issuer: AppEnv["Variables"]["issuer"]) {
-  const { logoKey, signatureKey, userId: _userId, ...rest } = issuer;
-  return { ...rest, hasLogo: !!logoKey, hasSignature: !!signatureKey };
+  const { logoKey, signatureKey, smtpPasswordEnc, userId: _userId, ...rest } = issuer;
+  return { ...rest, hasLogo: !!logoKey, hasSignature: !!signatureKey, mailConnected: !!(rest.smtpUser && smtpPasswordEnc) };
 }
 
 export const profileRoutes = new Hono<AppEnv>()
@@ -23,6 +25,43 @@ export const profileRoutes = new Hono<AppEnv>()
   .put("/", zValidator("json", profileSchema, validationHook), async (c) => {
     const updated = await updateProfile(c.var.db, c.var.issuer.id, c.req.valid("json"));
     return c.json(present(updated));
+  })
+
+  // Cuenta de Gmail para enviar facturas: se guarda cifrada y se comprueba con un email de prueba.
+  .put(
+    "/email",
+    zValidator(
+      "json",
+      z.object({
+        user: z.email({ message: "Email no válido" }),
+        password: z.string().regex(/^[a-zA-Z\s]{16,19}$/, {
+          message: "La contraseña de aplicación tiene 16 letras (Google la muestra en 4 grupos)",
+        }),
+      }),
+      validationHook,
+    ),
+    async (c) => {
+      const { user, password } = c.req.valid("json");
+      await connectMailAccount(c.var.db, c.env, c.var.issuer.id, user, password);
+      const issuer = await getIssuerByUserId(c.var.db, c.var.user.id);
+      try {
+        await sendMail(requireAccount(await mailAccountFor(c.env, issuer)), {
+          to: issuer.smtpUser!,
+          fromName: "Facturación",
+          subject: "Cuenta conectada",
+          body: "Tu cuenta de Gmail quedó conectada. Desde ahora puedes enviar facturas por email desde la app.",
+        });
+      } catch (e) {
+        await disconnectMailAccount(c.var.db, c.var.issuer.id);
+        throw e;
+      }
+      return c.json(present(issuer));
+    },
+  )
+
+  .delete("/email", async (c) => {
+    await disconnectMailAccount(c.var.db, c.var.issuer.id);
+    return c.json(present(await getIssuerByUserId(c.var.db, c.var.user.id)));
   })
 
   // Logo y firma: se guardan en R2 y solo se sirven al usuario autenticado.

@@ -130,6 +130,10 @@ export const issuers = pgTable("issuers", {
     .notNull()
     .default("Operación exenta de IVA conforme al artículo 20.Uno.3º de la Ley 37/1992"),
   defaultDueDays: integer("default_due_days").notNull().default(7),
+  // Envío de emails desde la cuenta de Gmail del emisor (contraseña de aplicación cifrada)
+  smtpUser: text("smtp_user"),
+  smtpPasswordEnc: text("smtp_password_enc"),
+  emailCopyToSelf: boolean("email_copy_to_self").notNull().default(false),
   // Pie con firma (opcional)
   showSignature: boolean("show_signature").notNull().default(false),
   signatureText: text("signature_text"),

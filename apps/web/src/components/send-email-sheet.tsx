@@ -6,9 +6,10 @@ import { ResponsiveSheet } from "@/components/responsive-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useMe } from "@/hooks/use-me";
 import { api, ApiError } from "@/lib/api";
-import type { InvoiceDetail } from "@/lib/types";
+import type { InvoiceDetail, Profile } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router";
 
 export function SendEmailSheet({
   open,
@@ -20,7 +21,7 @@ export function SendEmailSheet({
   invoice: InvoiceDetail;
 }) {
   const queryClient = useQueryClient();
-  const { data: me } = useMe();
+  const { data: profile } = useQuery({ queryKey: ["profile"], queryFn: () => api.get<Profile>("/profile") });
   const [to, setTo] = useState(invoice.client?.email ?? "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string>();
@@ -52,20 +53,23 @@ export function SendEmailSheet({
       title="Enviar por email"
       description={`Se adjunta el PDF de la factura ${invoice.number}.`}
     >
-      {me && !me.emailConfigured ? (
-        <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-          El envío por email todavía no está configurado. Mientras tanto puedes descargar el PDF o compartirlo.
-        </p>
+      {profile && !profile.mailConnected ? (
+        <div className="grid gap-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+          <p>Para enviar facturas por email, conecta tu Gmail en el perfil. Mientras tanto puedes descargar el PDF o compartirlo.</p>
+          <Button asChild variant="outline" size="sm" className="justify-self-start">
+            <Link to="/perfil">Ir a Perfil → Email</Link>
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-4">
           <Field label="Para" htmlFor="to" error={error}>
-            <Input id="to" type="email" inputMode="email" placeholder="cliente@correo.es" value={to} onChange={(e) => setTo(e.target.value)} />
+            <Input id="to" type="email" inputMode="email" placeholder="Ej.: cliente@correo.es" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
           <Field label="Mensaje" htmlFor="message" hint="Opcional. Si lo dejas vacío se envía un texto estándar con el importe.">
             <Textarea
               id="message"
               rows={4}
-              placeholder="Te adjunto la factura de las sesiones de noviembre."
+              placeholder="Ej.: Te adjunto la factura de las sesiones de noviembre."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />

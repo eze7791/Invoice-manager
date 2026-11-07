@@ -115,12 +115,12 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
       <Field label="Concepto *" htmlFor="description" error={errors.description?.message}>
         <Input
           id="description"
-          placeholder="Sesión de fisioterapia"
+          placeholder="Ej.: Sesión de fisioterapia"
           {...register("description", { validate: (v) => !!v.trim() || "Indica el concepto" })}
         />
       </Field>
       <Field label="Descripción" htmlFor="detail" hint="Opcional. Aparece debajo del concepto.">
-        <Textarea id="detail" rows={2} placeholder="Tratamiento de 60 minutos" {...register("detail")} />
+        <Textarea id="detail" rows={2} placeholder="Ej.: Tratamiento de 60 minutos" {...register("detail")} />
       </Field>
       <div className="grid grid-cols-3 gap-3">
         <Field label="Precio (€)" htmlFor="unitPrice" error={errors.unitPrice?.message}>
@@ -129,7 +129,7 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
             type="number"
             inputMode="decimal"
             step="0.01"
-            placeholder="60,00"
+            placeholder="Ej.: 60,00"
             {...register("unitPrice", { validate: (v) => (v !== "" && Number(v) >= 0) || "Indica el precio" })}
           />
         </Field>
@@ -139,12 +139,12 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
             type="number"
             inputMode="decimal"
             step="1"
-            placeholder="1"
+            placeholder="Ej.: 1"
             {...register("quantity", { validate: (v) => v === "" || Number(v) > 0 || "Mayor que 0" })}
           />
         </Field>
         <Field label="Descuento (€)" htmlFor="discount" error={errors.discount?.message}>
-          <Input id="discount" type="number" inputMode="decimal" step="0.01" placeholder="0" {...register("discount", { validate: positive })} />
+          <Input id="discount" type="number" inputMode="decimal" step="0.01" placeholder="Ej.: 0" {...register("discount", { validate: positive })} />
         </Field>
       </div>
 

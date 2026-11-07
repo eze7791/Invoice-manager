@@ -3,6 +3,8 @@ import { PenLine } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ChangePassword } from "@/components/change-password";
+import { EmailAccount } from "@/components/email-account";
 import { Field, FormSection } from "@/components/field";
 import { ImageField } from "@/components/image-field";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
@@ -19,7 +21,7 @@ import type { PaymentMethod, Profile } from "@/lib/types";
 
 type FileKind = "logo" | "signature";
 
-type ProfileValues = Omit<Profile, "id" | "hasLogo" | "hasSignature" | "updatedAt" | "defaultIrpfRate"> & {
+type ProfileValues = Omit<Profile, "id" | "hasLogo" | "hasSignature" | "updatedAt" | "defaultIrpfRate" | "mailConnected" | "smtpUser"> & {
   defaultIrpfRate: number;
 };
 
@@ -46,6 +48,7 @@ const toValues = (p: Profile): ProfileValues => ({
   vatExemptionText: p.vatExemptionText,
   defaultDueDays: p.defaultDueDays,
   showSignature: p.showSignature,
+  emailCopyToSelf: p.emailCopyToSelf,
   signatureText: p.signatureText ?? "",
 });
 
@@ -123,39 +126,39 @@ function ProfileForm({ profile }: { profile: Profile }) {
       <FormSection title="Datos fiscales">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre" htmlFor="firstName" error={errors.firstName?.message}>
-            <Input id="firstName" placeholder="Lucía" autoComplete="given-name" {...register("firstName")} />
+            <Input id="firstName" placeholder="Ej.: Lucía" autoComplete="given-name" {...register("firstName")} />
           </Field>
           <Field label="Apellidos" htmlFor="lastName" error={errors.lastName?.message}>
-            <Input id="lastName" placeholder="Martín García" autoComplete="family-name" {...register("lastName")} />
+            <Input id="lastName" placeholder="Ej.: Martín García" autoComplete="family-name" {...register("lastName")} />
           </Field>
           <Field label="NIF" htmlFor="nif" error={errors.nif?.message}>
-            <Input id="nif" placeholder="12345678Z o X1234567L" className="uppercase" {...register("nif")} />
+            <Input id="nif" placeholder="Ej.: 12345678Z o X1234567L" className="uppercase" {...register("nif")} />
           </Field>
           <Field label="Nombre comercial" htmlFor="tradeName" hint="Opcional">
-            <Input id="tradeName" placeholder="Fisioterapia Lucía" {...register("tradeName")} />
+            <Input id="tradeName" placeholder="Ej.: Fisioterapia Lucía" {...register("tradeName")} />
           </Field>
         </div>
       </FormSection>
 
       <FormSection title="Domicilio fiscal">
         <Field label="Dirección" htmlFor="street" hint="Vía y número" error={errors.street?.message}>
-          <Input id="street" placeholder="Calle Mayor 12" autoComplete="address-line1" {...register("street")} />
+          <Input id="street" placeholder="Ej.: Calle Mayor 12" autoComplete="address-line1" {...register("street")} />
         </Field>
         <Field label="Dirección 2" htmlFor="street2" hint="Opcional: piso, puerta, escalera, bloque o urbanización.">
-          <Input id="street2" placeholder="3º 1ª, escalera B" autoComplete="address-line2" {...register("street2")} />
+          <Input id="street2" placeholder="Ej.: 3º 1ª, escalera B" autoComplete="address-line2" {...register("street2")} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Código postal" htmlFor="postalCode" error={errors.postalCode?.message}>
-            <Input id="postalCode" placeholder="08001" inputMode="numeric" autoComplete="postal-code" {...register("postalCode")} />
+            <Input id="postalCode" placeholder="Ej.: 08001" inputMode="numeric" autoComplete="postal-code" {...register("postalCode")} />
           </Field>
           <Field label="Ciudad" htmlFor="city" error={errors.city?.message}>
-            <Input id="city" placeholder="Barcelona" autoComplete="address-level2" {...register("city")} />
+            <Input id="city" placeholder="Ej.: Barcelona" autoComplete="address-level2" {...register("city")} />
           </Field>
           <Field label="Provincia" htmlFor="province" error={errors.province?.message}>
-            <Input id="province" placeholder="Barcelona" autoComplete="address-level1" {...register("province")} />
+            <Input id="province" placeholder="Ej.: Barcelona" autoComplete="address-level1" {...register("province")} />
           </Field>
           <Field label="País" htmlFor="country" error={errors.country?.message}>
-            <Input id="country" placeholder="España" autoComplete="country-name" {...register("country")} />
+            <Input id="country" placeholder="Ej.: España" autoComplete="country-name" {...register("country")} />
           </Field>
         </div>
       </FormSection>
@@ -163,10 +166,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
       <FormSection title="Contacto">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Email" htmlFor="email" error={errors.email?.message}>
-            <Input id="email" placeholder="nombre@correo.es" type="email" inputMode="email" {...register("email")} />
+            <Input id="email" placeholder="Ej.: nombre@correo.es" type="email" inputMode="email" {...register("email")} />
           </Field>
           <Field label="Teléfono" htmlFor="phone" error={errors.phone?.message}>
-            <Input id="phone" placeholder="612 345 678" type="tel" inputMode="tel" {...register("phone")} />
+            <Input id="phone" placeholder="Ej.: 612 345 678" type="tel" inputMode="tel" {...register("phone")} />
           </Field>
         </div>
       </FormSection>
@@ -207,16 +210,16 @@ function ProfileForm({ profile }: { profile: Profile }) {
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Titular de la cuenta" htmlFor="bankHolder">
-            <Input id="bankHolder" placeholder="Lucía Martín García" {...register("bankHolder")} />
+            <Input id="bankHolder" placeholder="Ej.: Lucía Martín García" {...register("bankHolder")} />
           </Field>
           <Field label="Banco" htmlFor="bankName">
-            <Input id="bankName" placeholder="Banco Ejemplo" {...register("bankName")} />
+            <Input id="bankName" placeholder="Ej.: Banco Ejemplo" {...register("bankName")} />
           </Field>
           <Field label="IBAN" htmlFor="iban" error={errors.iban?.message} className="sm:col-span-2">
-            <Input id="iban" className="uppercase" placeholder="ES00 0000 0000 0000 0000 0000" {...register("iban")} />
+            <Input id="iban" className="uppercase" placeholder="Ej.: ES00 0000 0000 0000 0000 0000" {...register("iban")} />
           </Field>
           <Field label="Dirección del banco" htmlFor="bankAddress" hint="Opcional" className="sm:col-span-2">
-            <Input id="bankAddress" placeholder="Calle Mayor 1, Barcelona" {...register("bankAddress")} />
+            <Input id="bankAddress" placeholder="Ej.: Calle Mayor 1, Barcelona" {...register("bankAddress")} />
           </Field>
         </div>
         <Field
@@ -227,7 +230,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <Textarea
             id="paymentInstructions"
             rows={3}
-            placeholder="Pago por transferencia indicando el número de factura, o Bizum al 612 345 678."
+            placeholder="Ej.: Pago por transferencia indicando el número de factura, o Bizum al 612 345 678."
             {...register("paymentInstructions")}
           />
         </Field>
@@ -241,10 +244,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
             error={errors.defaultIrpfRate?.message}
             hint="A particulares se aplica 0 %."
           >
-            <Input id="defaultIrpfRate" placeholder="15" type="number" inputMode="decimal" step="0.01" {...register("defaultIrpfRate")} />
+            <Input id="defaultIrpfRate" placeholder="Ej.: 15" type="number" inputMode="decimal" step="0.01" {...register("defaultIrpfRate")} />
           </Field>
           <Field label="Vencimiento (días)" htmlFor="defaultDueDays" error={errors.defaultDueDays?.message}>
-            <Input id="defaultDueDays" placeholder="7" type="number" inputMode="numeric" {...register("defaultDueDays")} />
+            <Input id="defaultDueDays" placeholder="Ej.: 7" type="number" inputMode="numeric" {...register("defaultDueDays")} />
           </Field>
         </div>
         <Field
@@ -274,7 +277,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
               <Textarea
                 id="signatureText"
                 rows={2}
-                placeholder="Al firmar este documento, el cliente acepta los servicios y condiciones descritos."
+                placeholder="Ej.: Al firmar este documento, el cliente acepta los servicios y condiciones descritos."
                 {...register("signatureText")}
               />
             </Field>
@@ -292,6 +295,32 @@ function ProfileForm({ profile }: { profile: Profile }) {
             />
           </>
         )}
+      </FormSection>
+
+      <FormSection
+        title="Email"
+        description="Conecta tu Gmail para enviar las facturas a tus clientes desde la app. Es opcional: también puedes descargarlas o compartirlas."
+      >
+        <EmailAccount profile={profile} />
+        {profile.mailConnected && (
+          <Controller
+            control={control}
+            name="emailCopyToSelf"
+            render={({ field }) => (
+              <label className="flex items-center justify-between gap-4 border-t pt-4">
+                <span className="text-sm">
+                  Recibir copia de cada factura enviada
+                  <span className="block text-xs text-muted-foreground">Se envía en copia oculta a {profile.smtpUser}.</span>
+                </span>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </label>
+            )}
+          />
+        )}
+      </FormSection>
+
+      <FormSection title="Seguridad" description="Cambia la contraseña con la que entras en la app.">
+        <ChangePassword />
       </FormSection>
 
       <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 border-t bg-background/95 p-3 backdrop-blur md:bottom-0">

@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useMe } from "@/hooks/use-me";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, ApiError } from "@/lib/api";
 import { addDays, computeTotals, daysBetween, formatEuro, lineTotal, today } from "@/lib/format";
@@ -108,7 +107,6 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
   const [confirmIssue, setConfirmIssue] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sendOnIssue, setSendOnIssue] = useState(false);
-  const { data: me } = useMe();
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Id del borrador ya guardado (al crear uno nuevo, tras el primer guardado).
   const [savedId, setSavedId] = useState(invoice?.id);
@@ -209,7 +207,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
     <div className="space-y-4 pb-36 md:pb-24">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{title}</h1>
-        <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={() => navigate(invoice ? `/facturas/${invoice.id}` : "/")}>
+        <Button variant="ghost" size="icon" aria-label="Cerrar" onClick={() => navigate(invoice ? `/facturas/${invoice.id}` : "/facturas")}>
           <X />
         </Button>
       </div>
@@ -220,7 +218,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
             <Textarea
               id="rectificationReason"
               rows={2}
-              placeholder="Error en el precio del servicio"
+              placeholder="Ej.: Error en el precio del servicio"
               value={draft.rectificationReason}
               onChange={(e) => set("rectificationReason", e.target.value)}
             />
@@ -247,7 +245,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
               type="number"
               inputMode="numeric"
               min={0}
-              placeholder="7"
+              placeholder="Ej.: 7"
               disabled={draft.dueDate === null}
               value={dueDays ?? ""}
               onChange={(e) => set("dueDate", addDays(draft.issueDate, Math.max(0, Number(e.target.value) || 0)))}
@@ -417,7 +415,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
           <Textarea
             id="paymentInstructions"
             rows={3}
-            placeholder="Pago por transferencia indicando el número de factura."
+            placeholder="Ej.: Pago por transferencia indicando el número de factura."
             value={draft.paymentInstructions}
             onChange={(e) => set("paymentInstructions", e.target.value)}
           />
@@ -426,7 +424,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
           <Textarea
             id="notes"
             rows={3}
-            placeholder="Gracias por su confianza."
+            placeholder="Ej.: Gracias por su confianza."
             value={draft.notes}
             onChange={(e) => set("notes", e.target.value)}
           />
@@ -471,7 +469,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
               hacer una factura rectificativa.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {draft.client?.email && me?.emailConfigured && (
+          {draft.client?.email && profile.mailConnected && (
             <label className="flex items-center justify-between gap-4 rounded-lg border p-3 text-sm">
               <span>
                 Enviar por email al cliente

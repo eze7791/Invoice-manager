@@ -27,6 +27,9 @@ export type Profile = {
   signatureText: string | null;
   hasLogo: boolean;
   hasSignature: boolean;
+  mailConnected: boolean;
+  smtpUser: string | null;
+  emailCopyToSelf: boolean;
   updatedAt: string;
 };
 

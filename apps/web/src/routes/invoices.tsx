@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FolderDown, Plus, Search } from "lucide-react";
 import { useDeferredValue, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { ExportSheet } from "@/components/export-sheet";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,11 @@ const filters: { value: PaymentStatus | "todas"; label: string }[] = [
 
 export function InvoicesPage() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<PaymentStatus | "todas">("todas");
+  const [params] = useSearchParams();
+  const initial = params.get("estado") as PaymentStatus | null;
+  const [status, setStatus] = useState<PaymentStatus | "todas">(
+    initial && filters.some((f) => f.value === initial) ? initial : "todas",
+  );
   const [search, setSearch] = useState("");
   const [exporting, setExporting] = useState(false);
   const q = useDeferredValue(search);

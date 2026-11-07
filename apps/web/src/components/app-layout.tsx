@@ -1,11 +1,12 @@
-import { FileText, LogOut, User, Users } from "lucide-react";
+import { FileText, Home, LogOut, User, Users } from "lucide-react";
 import { Navigate, NavLink, Outlet, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Facturas", icon: FileText, end: true },
+  { to: "/", label: "Inicio", icon: Home, end: true },
+  { to: "/facturas", label: "Facturas", icon: FileText, end: false },
   { to: "/clientes", label: "Clientes", icon: Users, end: false },
   { to: "/perfil", label: "Perfil", icon: User, end: false },
 ];
@@ -57,7 +58,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-3 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
         {nav.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}

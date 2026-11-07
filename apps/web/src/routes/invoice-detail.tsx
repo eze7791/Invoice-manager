@@ -69,7 +69,7 @@ export function InvoiceDetailPage() {
       <div className="space-y-4 text-center">
         <p className="text-muted-foreground">No se encontró la factura.</p>
         <Button asChild variant="outline">
-          <Link to="/">Volver a facturas</Link>
+          <Link to="/facturas">Volver a facturas</Link>
         </Button>
       </div>
     );
@@ -100,7 +100,7 @@ export function InvoiceDetailPage() {
       await api.delete(`/invoices/${inv.id}`);
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
       toast.success("Borrador eliminado");
-      navigate("/", { replace: true });
+      navigate("/facturas", { replace: true });
     });
 
   const pdfUrl = `/api/invoices/${inv.id}/pdf`;
@@ -128,7 +128,7 @@ export function InvoiceDetailPage() {
   return (
     <div className="space-y-4 pb-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/">
+        <Link to="/facturas">
           <ArrowLeft /> Facturas
         </Link>
       </Button>
@@ -445,7 +445,7 @@ function PaymentSheet({
           <Input id="paidOn" type="date" max={today()} value={paidOn} onChange={(e) => setPaidOn(e.target.value || today())} />
         </Field>
         <Field label="Nota" htmlFor="payNote" hint="Opcional">
-          <Input id="payNote" placeholder="Pagado en consulta" value={note} onChange={(e) => setNote(e.target.value)} />
+          <Input id="payNote" placeholder="Ej.: Pagado en consulta" value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -492,7 +492,7 @@ function RectifySheet({ open, onOpenChange, invoice }: { open: boolean; onOpenCh
           <Textarea
             id="reason"
             rows={3}
-            placeholder="Error en el precio del servicio"
+            placeholder="Ej.: Error en el precio del servicio"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />

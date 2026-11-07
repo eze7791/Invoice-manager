@@ -15,7 +15,7 @@ import {
   updateDraft,
 } from "../services/invoices";
 import { clientDisplayName, getInvoicePdf, invalidatePdf, issuerName, pdfFileName } from "../services/documents";
-import { sendInvoiceEmail } from "../services/email";
+import { mailAccountFor, requireAccount, sendMail } from "../services/email";
 import { formatEuroPlain } from "../services/money";
 import type { AppEnv } from "../types";
 import { invoiceDraftSchema, invoiceListQuery, paymentSchema } from "../validation";
@@ -87,6 +87,7 @@ export const invoiceRoutes = new Hono<AppEnv>()
     async (c) => {
       const { id } = c.req.valid("param");
       const { to, message } = c.req.valid("json");
+      const account = requireAccount(await mailAccountFor(c.env, c.var.issuer));
       const { invoice, bytes } = await getInvoicePdf(c.var.db, c.env.FILES, c.var.issuer.id, id);
       if (invoice.status !== "emitida") return c.json({ error: "Solo se pueden enviar facturas emitidas." }, 409);
 
@@ -107,8 +108,9 @@ export const invoiceRoutes = new Hono<AppEnv>()
         .filter((l) => l !== null)
         .join("\n");
 
-      await sendInvoiceEmail(c.env, {
+      await sendMail(account, {
         to,
+        bcc: c.var.issuer.emailCopyToSelf ? account.user : null,
         fromName: from,
         replyTo: issuer.email,
         subject: `Factura ${invoice.number} - ${from}`,

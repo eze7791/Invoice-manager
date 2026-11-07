@@ -57,6 +57,7 @@ export const profileSchema = z.object({
   vatExemptionText: requiredText(500),
   defaultDueDays: z.coerce.number().int().min(0).max(365),
   showSignature: z.boolean(),
+  emailCopyToSelf: z.boolean().default(false),
   signatureText: optionalText(500),
 });
 

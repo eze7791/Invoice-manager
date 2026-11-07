@@ -128,3 +128,13 @@
     @apply font-sans;
     }
 }
+/*
+ * Los textos de ejemplo de los campos se distinguen claramente de un valor escrito:
+ * más claros y en cursiva, y empiezan por "Ej.:".
+ */
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 60%, transparent) !important;
+  font-style: italic;
+  opacity: 1;
+}

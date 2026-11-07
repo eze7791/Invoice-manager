@@ -63,9 +63,6 @@ npm run db:generate    # nueva migración tras cambiar el esquema
    npx wrangler r2 bucket create facturacion-files
    npx wrangler secret put BETTER_AUTH_SECRET
    npx wrangler secret put BETTER_AUTH_URL     # p. ej. https://facturacion.<cuenta>.workers.dev
-   # Opcional, para enviar facturas por email desde Gmail:
-   npx wrangler secret put GMAIL_USER
-   npx wrangler secret put GMAIL_APP_PASSWORD  # contraseña de aplicación de Google
    ```
 5. `npm run deploy` desde la raíz.
 
@@ -76,6 +73,7 @@ npm run db:generate    # nueva migración tras cambiar el esquema
 - **Facturas inmutables**: al emitir se guardan copias (`jsonb`) de los datos del emisor y del cliente; las correcciones se hacen con facturas rectificativas.
 - **Exención de IVA** (actividad sanitaria, art. 20.Uno.3º Ley 37/1992) con retención de IRPF configurable.
 - **PDF generado una sola vez** al emitir y guardado en R2 (la factura es inmutable); se regenera solo si cambia el estado de pago. La exportación empaqueta esos PDFs sin recomprimirlos para no gastar CPU del Worker.
+- **Email desde la cuenta del usuario**: cada emisor conecta su Gmail en el perfil con una contraseña de aplicación, que se guarda cifrada (AES-GCM, clave derivada de `BETTER_AUTH_SECRET`). La misma cuenta envía los enlaces de recuperación de contraseña.
 - Ningún dato real (base de datos, PDFs, logos, secretos) va al repositorio.
 
 ## Hoja de ruta

@@ -3,11 +3,11 @@ import { createDb } from "./db";
 import { createAuth } from "./lib/auth";
 import { requireIssuer } from "./lib/issuer";
 import { requireUser } from "./lib/session";
-import { isMailConfigured } from "./services/email";
 import { clientRoutes } from "./routes/clients";
 import { exportRoutes } from "./routes/export";
 import { invoiceRoutes } from "./routes/invoices";
 import { serviceRoutes } from "./routes/services";
+import { getDashboard } from "./services/dashboard";
 import { DomainError } from "./services/errors";
 import { profileRoutes } from "./routes/profile";
 import type { AppEnv } from "./types";
@@ -28,7 +28,7 @@ app.get("/health", (c) => c.json({ ok: true }));
 
 app.get("/me", requireUser, (c) => {
   const { id, name, email } = c.var.user;
-  return c.json({ id, name, email, emailConfigured: isMailConfigured(c.env) });
+  return c.json({ id, name, email });
 });
 
 // Todo lo que sigue exige sesión y opera sobre el emisor del usuario.
@@ -42,6 +42,8 @@ app.route("/clients", clientRoutes);
 app.route("/invoices", invoiceRoutes);
 app.route("/services", serviceRoutes);
 app.route("/export", exportRoutes);
+
+app.get("/dashboard", requireUser, requireIssuer, async (c) => c.json(await getDashboard(c.var.db, c.var.issuer.id)));
 
 app.notFound((c) => c.json({ error: "No encontrado" }, 404));
 
