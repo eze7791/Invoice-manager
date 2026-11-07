@@ -2,7 +2,7 @@
 
 App web privada para que un autónomo en España gestione clientes, emita facturas en PDF y exporte todo para su gestoría. Pensada para usarse desde el móvil (PWA) y alojada a coste cero en Cloudflare.
 
-> Estado: **fase 3** (facturas, rectificativas y pagos). Ver [Hoja de ruta](#hoja-de-ruta).
+> Estado: **fase 4** (PDF, email y exportación). Ver [Hoja de ruta](#hoja-de-ruta).
 
 ## Stack
 
@@ -13,7 +13,10 @@ App web privada para que un autónomo en España gestione clientes, emita factur
 | Base de datos | PostgreSQL (Neon en producción vía Hyperdrive, Docker en local) |
 | ORM | Drizzle ORM + drizzle-kit |
 | Login | Better Auth (email y contraseña, sin registro público) |
-| Archivos | Cloudflare R2 |
+| Archivos | Cloudflare R2 (logo, firma y PDFs) |
+| PDF | pdf-lib |
+| Email | Gmail por SMTP (worker-mailer) |
+| Exportación | ZIP (fflate) con PDFs + CSV para Excel |
 | Tests | Vitest |
 
 Un único Worker sirve la web compilada y responde en `/api/*`.
@@ -60,6 +63,9 @@ npm run db:generate    # nueva migración tras cambiar el esquema
    npx wrangler r2 bucket create facturacion-files
    npx wrangler secret put BETTER_AUTH_SECRET
    npx wrangler secret put BETTER_AUTH_URL     # p. ej. https://facturacion.<cuenta>.workers.dev
+   # Opcional, para enviar facturas por email desde Gmail:
+   npx wrangler secret put GMAIL_USER
+   npx wrangler secret put GMAIL_APP_PASSWORD  # contraseña de aplicación de Google
    ```
 5. `npm run deploy` desde la raíz.
 
@@ -69,6 +75,7 @@ npm run db:generate    # nueva migración tras cambiar el esquema
 - **Numeración sin huecos** por serie y año (`invoice_series`), con bloqueo `SELECT … FOR UPDATE` al emitir.
 - **Facturas inmutables**: al emitir se guardan copias (`jsonb`) de los datos del emisor y del cliente; las correcciones se hacen con facturas rectificativas.
 - **Exención de IVA** (actividad sanitaria, art. 20.Uno.3º Ley 37/1992) con retención de IRPF configurable.
+- **PDF generado una sola vez** al emitir y guardado en R2 (la factura es inmutable); se regenera solo si cambia el estado de pago. La exportación empaqueta esos PDFs sin recomprimirlos para no gastar CPU del Worker.
 - Ningún dato real (base de datos, PDFs, logos, secretos) va al repositorio.
 
 ## Hoja de ruta
@@ -76,5 +83,5 @@ npm run db:generate    # nueva migración tras cambiar el esquema
 1. ✅ Infraestructura, esquema de base de datos y login
 2. ✅ Perfil del emisor y clientes
 3. ✅ Facturas: conceptos, IRPF, emisión, rectificativas, pagos
-4. PDF, envío por email y exportación para la gestoría
+4. ✅ PDF, envío por email y exportación para la gestoría
 5. Dashboard, historial con filtros, PWA y despliegue

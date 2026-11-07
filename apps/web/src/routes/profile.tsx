@@ -171,7 +171,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
         </div>
       </FormSection>
 
-      <FormSection title="Logo" description="Aparece arriba a la derecha de la factura. PNG, JPG o WebP, máx. 2 MB.">
+      <FormSection title="Logo" description="Aparece arriba a la derecha de la factura. PNG o JPG, máx. 2 MB.">
         <ImageField
           src={fileUrl("logo", profile.hasLogo)}
           alt="Logo"

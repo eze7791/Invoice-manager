@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Copy, FilePen, History, Pencil, Trash2, Undo2, Wallet } from "lucide-react";
+import { ArrowLeft, Check, Copy, Download, FileText, FilePen, History, Mail, Pencil, Share, Trash2, Undo2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { Field } from "@/components/field";
 import { ResponsiveSheet } from "@/components/responsive-sheet";
+import { SendEmailSheet } from "@/components/send-email-sheet";
 import { StatusBadge } from "@/components/status-badge";
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ export function InvoiceDetailPage() {
   const [paying, setPaying] = useState(false);
   const [rectifying, setRectifying] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const { data: inv, isError } = useQuery({
     queryKey: ["invoice", id],
@@ -101,6 +103,21 @@ export function InvoiceDetailPage() {
       navigate("/", { replace: true });
     });
 
+  const pdfUrl = `/api/invoices/${inv.id}/pdf`;
+  const fileName = `${inv.kind === "rectificativa" ? "Factura-rectificativa" : "Factura"}-${inv.number ?? "borrador"}.pdf`;
+
+  /** Hoja de compartir nativa del móvil (WhatsApp, Mail…) con el PDF adjunto. */
+  const share = () =>
+    action.mutate(async () => {
+      const blob = await fetch(pdfUrl, { credentials: "include" }).then((r) => r.blob());
+      const file = new File([blob], fileName, { type: "application/pdf" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: fileName }).catch(() => {});
+      } else {
+        window.open(pdfUrl, "_blank");
+      }
+    });
+
   const unpay = () =>
     action.mutate(async () => {
       await api.post(`/invoices/${inv.id}/unpay`);
@@ -148,8 +165,9 @@ export function InvoiceDetailPage() {
         </div>
 
         {!isDraft && (
-          <ol className="mt-5 grid grid-cols-2 gap-2">
+          <ol className="mt-5 grid grid-cols-3 gap-2">
             <TimelineStep done label="Emitida" date={issuedEvent?.createdAt ?? inv.issuedAt} />
+            <TimelineStep done={!!inv.sentAt} label="Enviada" date={inv.sentAt} />
             <TimelineStep done={!!inv.paidAt} label="Pagada" date={inv.paidAt} />
           </ol>
         )}
@@ -168,6 +186,30 @@ export function InvoiceDetailPage() {
           </p>
         )}
       </section>
+
+      {/* Documento */}
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Button asChild variant="secondary">
+          <a href={pdfUrl} target="_blank" rel="noreferrer">
+            <FileText /> {isDraft ? "Vista previa" : "Ver PDF"}
+          </a>
+        </Button>
+        <Button asChild variant="secondary">
+          <a href={`${pdfUrl}?download=1`} download={fileName}>
+            <Download /> Descargar
+          </a>
+        </Button>
+        {!isDraft && (
+          <>
+            <Button variant="secondary" onClick={share} disabled={action.isPending}>
+              <Share /> Compartir
+            </Button>
+            <Button variant="secondary" onClick={() => setSending(true)}>
+              <Mail /> {inv.sentAt ? "Reenviar" : "Enviar por email"}
+            </Button>
+          </>
+        )}
+      </div>
 
       {/* Acciones */}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -294,6 +336,7 @@ export function InvoiceDetailPage() {
 
       <PaymentSheet open={paying} onOpenChange={setPaying} invoice={inv} onDone={refresh} />
       <RectifySheet open={rectifying} onOpenChange={setRectifying} invoice={inv} />
+      {!isDraft && <SendEmailSheet key={inv.id} open={sending} onOpenChange={setSending} invoice={inv} />}
 
       <ResponsiveSheet open={showLog} onOpenChange={setShowLog} title="Registro">
         <ol className="grid gap-3 pb-2">

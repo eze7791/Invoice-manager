@@ -30,3 +30,6 @@ export function computeTotals(lines: LineAmounts[], irpfRate: string | number, v
 }
 
 export const toMoney = (d: Decimal) => d.toFixed(2);
+
+const euro = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+export const formatEuroPlain = (v: string | number) => euro.format(Number(v));

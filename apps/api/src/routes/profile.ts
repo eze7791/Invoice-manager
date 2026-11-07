@@ -6,7 +6,8 @@ import { profileSchema } from "../validation";
 import { validationHook } from "./validation-hook";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+// Solo PNG y JPG: son los formatos que se pueden incrustar en el PDF.
+const IMAGE_TYPES = ["image/png", "image/jpeg"];
 
 const isFileKind = (v: string): v is FileKind => v === "logo" || v === "signature";
 
@@ -46,7 +47,7 @@ export const profileRoutes = new Hono<AppEnv>()
     const body = await c.req.parseBody();
     const file = body.file;
     if (!(file instanceof File)) return c.json({ error: "Falta el archivo" }, 400);
-    if (!IMAGE_TYPES.includes(file.type)) return c.json({ error: "Formato no admitido (PNG, JPG o WebP)" }, 400);
+    if (!IMAGE_TYPES.includes(file.type)) return c.json({ error: "Formato no admitido (PNG o JPG)" }, 400);
     if (file.size > MAX_IMAGE_BYTES) return c.json({ error: "La imagen supera los 2 MB" }, 400);
 
     const key = `issuers/${c.var.issuer.id}/${kind}`;

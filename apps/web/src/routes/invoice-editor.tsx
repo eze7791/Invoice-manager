@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useMe } from "@/hooks/use-me";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, ApiError } from "@/lib/api";
 import { addDays, computeTotals, daysBetween, formatEuro, lineTotal, today } from "@/lib/format";
@@ -106,6 +107,8 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
   const [editingLine, setEditingLine] = useState<InvoiceLine | "new" | null>(null);
   const [confirmIssue, setConfirmIssue] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sendOnIssue, setSendOnIssue] = useState(false);
+  const { data: me } = useMe();
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Id del borrador ya guardado (al crear uno nuevo, tras el primer guardado).
   const [savedId, setSavedId] = useState(invoice?.id);
@@ -170,7 +173,16 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
     setErrors({});
     try {
       const id = await save();
-      if (action === "issue") await api.post(`/invoices/${id}/issue`);
+      if (action === "issue") {
+        await api.post(`/invoices/${id}/issue`);
+        if (sendOnIssue && draft.client?.email) {
+          // Si falla el envío, la factura ya está emitida: se avisa y se puede reenviar desde el detalle.
+          await api
+            .post(`/invoices/${id}/send`, { to: draft.client.email })
+            .then(() => toast.success(`Enviada a ${draft.client!.email}`))
+            .catch((e) => toast.error(`Emitida, pero no se pudo enviar: ${e.message}`));
+        }
+      }
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
       await queryClient.invalidateQueries({ queryKey: ["invoice", id] });
       toast.success(action === "issue" ? "Factura emitida" : "Borrador guardado");
@@ -459,6 +471,15 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
               hacer una factura rectificativa.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {draft.client?.email && me?.emailConfigured && (
+            <label className="flex items-center justify-between gap-4 rounded-lg border p-3 text-sm">
+              <span>
+                Enviar por email al cliente
+                <span className="block text-xs text-muted-foreground">{draft.client.email}</span>
+              </span>
+              <Switch checked={sendOnIssue} onCheckedChange={setSendOnIssue} />
+            </label>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
             <AlertDialogAction

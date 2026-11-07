@@ -453,3 +453,11 @@ export async function getInvoiceDetail(db: Db, issuerId: string, id: string) {
     rectifiedBy: related.filter((r) => r.id !== invoice.rectifiesId).map(label),
   };
 }
+
+/** Registra que la factura se envió al cliente. */
+export async function recordSent(db: Db, issuerId: string, id: string, to: string) {
+  const invoice = await findOwned(db, issuerId, id);
+  if (invoice.status !== "emitida") throw new DomainError("Solo se pueden enviar facturas emitidas.");
+  await db.update(invoices).set({ sentAt: new Date() }).where(eq(invoices.id, id));
+  await addEvent(db, id, "enviada", { to });
+}

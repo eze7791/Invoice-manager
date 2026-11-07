@@ -7,6 +7,8 @@ export type Bindings = {
   ASSETS: Fetcher;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;
+  GMAIL_USER?: string;
+  GMAIL_APP_PASSWORD?: string;
 };
 
 type SessionResult = NonNullable<Awaited<ReturnType<Auth["api"]["getSession"]>>>;

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { FolderDown, Plus, Search } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { ExportSheet } from "@/components/export-sheet";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ export function InvoicesPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus | "todas">("todas");
   const [search, setSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
   const q = useDeferredValue(search);
 
   const { data: invoices, isPending } = useQuery({
@@ -40,9 +42,14 @@ export function InvoicesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Facturas</h1>
-        <Button className="hidden md:inline-flex" onClick={() => navigate("/facturas/nueva")}>
-          <Plus /> Nueva factura
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setExporting(true)}>
+            <FolderDown /> Exportar
+          </Button>
+          <Button className="hidden md:inline-flex" onClick={() => navigate("/facturas/nueva")}>
+            <Plus /> Nueva factura
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -116,6 +123,8 @@ export function InvoicesPage() {
       >
         <Plus className="size-6" />
       </Button>
+
+      <ExportSheet open={exporting} onOpenChange={setExporting} />
     </div>
   );
 }

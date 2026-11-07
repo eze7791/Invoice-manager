@@ -33,7 +33,7 @@ export function ImageField({
         <input
           ref={input}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg"
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];

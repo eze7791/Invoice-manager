@@ -2,3 +2,8 @@
 # Generar el secreto con: openssl rand -base64 32
 BETTER_AUTH_SECRET=cambiar-por-un-secreto-largo
 BETTER_AUTH_URL=http://localhost:5173
+
+# Envío de facturas por email (opcional). Gmail → Cuenta de Google → Seguridad →
+# Verificación en dos pasos → Contraseñas de aplicación.
+GMAIL_USER=
+GMAIL_APP_PASSWORD=
