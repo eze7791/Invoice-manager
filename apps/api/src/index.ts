@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { secureHeaders } from "hono/secure-headers";
 import { createDb } from "./db";
 import { createAuth } from "./lib/auth";
 import { requireIssuer } from "./lib/issuer";
@@ -13,6 +14,17 @@ import { profileRoutes } from "./routes/profile";
 import type { AppEnv } from "./types";
 
 const app = new Hono<AppEnv>().basePath("/api");
+
+// Cabeceras de seguridad en las respuestas de la API (la web estática las recibe de public/_headers).
+const baseHeaders = {
+  strictTransportSecurity: "max-age=31536000; includeSubDomains",
+  xFrameOptions: "DENY",
+  referrerPolicy: "same-origin",
+};
+const withCsp = secureHeaders({ ...baseHeaders, contentSecurityPolicy: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } });
+// Sin CSP en el PDF: con `default-src 'none'` algunos visores de PDF del navegador no lo muestran.
+const withoutCsp = secureHeaders(baseHeaders);
+app.use("*", (c, next) => (c.req.path.endsWith("/pdf") ? withoutCsp(c, next) : withCsp(c, next)));
 
 // Una conexión y una instancia de Better Auth por petición (los bindings solo existen en la petición).
 app.use("*", async (c, next) => {

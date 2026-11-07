@@ -3,6 +3,7 @@ import { PenLine } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { ActiveSessions } from "@/components/active-sessions";
 import { ChangePassword } from "@/components/change-password";
 import { EmailAccount } from "@/components/email-account";
 import { Field, FormSection } from "@/components/field";
@@ -321,6 +322,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
 
       <FormSection title="Seguridad" description="Cambia la contraseña con la que entras en la app.">
         <ChangePassword />
+      </FormSection>
+
+      <FormSection title="Sesiones activas" description="Dispositivos donde tienes la sesión abierta.">
+        <ActiveSessions />
       </FormSection>
 
       <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 border-t bg-background/95 p-3 backdrop-blur md:bottom-0">

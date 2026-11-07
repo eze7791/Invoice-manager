@@ -45,8 +45,9 @@ export function createAuth(db: Db, env: MailEnv & { BETTER_AUTH_URL: string }) {
       },
     },
     session: {
-      expiresIn: 60 * 60 * 24 * 30, // 30 días
-      updateAge: 60 * 60 * 24,
+      // Se cierra tras 60 minutos sin actividad. Mientras se usa, se renueva cada 5 minutos.
+      expiresIn: 60 * 60,
+      updateAge: 5 * 60,
     },
     rateLimit: { enabled: true, window: 60, max: 10 },
   });
