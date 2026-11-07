@@ -121,36 +121,36 @@ function ProfileForm({ profile }: { profile: Profile }) {
       <FormSection title="Datos fiscales">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nombre" htmlFor="firstName" error={errors.firstName?.message}>
-            <Input id="firstName" autoComplete="given-name" {...register("firstName")} />
+            <Input id="firstName" placeholder="Lucía" autoComplete="given-name" {...register("firstName")} />
           </Field>
           <Field label="Apellidos" htmlFor="lastName" error={errors.lastName?.message}>
-            <Input id="lastName" autoComplete="family-name" {...register("lastName")} />
+            <Input id="lastName" placeholder="Martín García" autoComplete="family-name" {...register("lastName")} />
           </Field>
           <Field label="NIF" htmlFor="nif" error={errors.nif?.message}>
-            <Input id="nif" className="uppercase" {...register("nif")} />
+            <Input id="nif" placeholder="12345678Z o X1234567L" className="uppercase" {...register("nif")} />
           </Field>
           <Field label="Nombre comercial" htmlFor="tradeName" hint="Opcional">
-            <Input id="tradeName" {...register("tradeName")} />
+            <Input id="tradeName" placeholder="Fisioterapia Lucía" {...register("tradeName")} />
           </Field>
         </div>
       </FormSection>
 
       <FormSection title="Domicilio fiscal">
         <Field label="Dirección" htmlFor="street" error={errors.street?.message}>
-          <Input id="street" autoComplete="street-address" {...register("street")} />
+          <Input id="street" placeholder="Calle Mayor 12, 3º 1ª" autoComplete="street-address" {...register("street")} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Código postal" htmlFor="postalCode" error={errors.postalCode?.message}>
-            <Input id="postalCode" inputMode="numeric" autoComplete="postal-code" {...register("postalCode")} />
+            <Input id="postalCode" placeholder="08001" inputMode="numeric" autoComplete="postal-code" {...register("postalCode")} />
           </Field>
           <Field label="Ciudad" htmlFor="city" error={errors.city?.message}>
-            <Input id="city" autoComplete="address-level2" {...register("city")} />
+            <Input id="city" placeholder="Barcelona" autoComplete="address-level2" {...register("city")} />
           </Field>
           <Field label="Provincia" htmlFor="province" error={errors.province?.message}>
-            <Input id="province" autoComplete="address-level1" {...register("province")} />
+            <Input id="province" placeholder="Barcelona" autoComplete="address-level1" {...register("province")} />
           </Field>
           <Field label="País" htmlFor="country" error={errors.country?.message}>
-            <Input id="country" autoComplete="country-name" {...register("country")} />
+            <Input id="country" placeholder="España" autoComplete="country-name" {...register("country")} />
           </Field>
         </div>
       </FormSection>
@@ -158,10 +158,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
       <FormSection title="Contacto">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Email" htmlFor="email" error={errors.email?.message}>
-            <Input id="email" type="email" inputMode="email" {...register("email")} />
+            <Input id="email" placeholder="nombre@correo.es" type="email" inputMode="email" {...register("email")} />
           </Field>
           <Field label="Teléfono" htmlFor="phone" error={errors.phone?.message}>
-            <Input id="phone" type="tel" inputMode="tel" {...register("phone")} />
+            <Input id="phone" placeholder="612 345 678" type="tel" inputMode="tel" {...register("phone")} />
           </Field>
         </div>
       </FormSection>
@@ -202,16 +202,16 @@ function ProfileForm({ profile }: { profile: Profile }) {
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Titular de la cuenta" htmlFor="bankHolder">
-            <Input id="bankHolder" {...register("bankHolder")} />
+            <Input id="bankHolder" placeholder="Lucía Martín García" {...register("bankHolder")} />
           </Field>
           <Field label="Banco" htmlFor="bankName">
-            <Input id="bankName" {...register("bankName")} />
+            <Input id="bankName" placeholder="Banco Ejemplo" {...register("bankName")} />
           </Field>
           <Field label="IBAN" htmlFor="iban" error={errors.iban?.message} className="sm:col-span-2">
             <Input id="iban" className="uppercase" placeholder="ES00 0000 0000 0000 0000 0000" {...register("iban")} />
           </Field>
           <Field label="Dirección del banco" htmlFor="bankAddress" hint="Opcional" className="sm:col-span-2">
-            <Input id="bankAddress" {...register("bankAddress")} />
+            <Input id="bankAddress" placeholder="Calle Mayor 1, Barcelona" {...register("bankAddress")} />
           </Field>
         </div>
       </FormSection>
@@ -224,10 +224,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
             error={errors.defaultIrpfRate?.message}
             hint="A particulares se aplica 0 %."
           >
-            <Input id="defaultIrpfRate" type="number" inputMode="decimal" step="0.01" {...register("defaultIrpfRate")} />
+            <Input id="defaultIrpfRate" placeholder="15" type="number" inputMode="decimal" step="0.01" {...register("defaultIrpfRate")} />
           </Field>
           <Field label="Vencimiento (días)" htmlFor="defaultDueDays" error={errors.defaultDueDays?.message}>
-            <Input id="defaultDueDays" type="number" inputMode="numeric" {...register("defaultDueDays")} />
+            <Input id="defaultDueDays" placeholder="7" type="number" inputMode="numeric" {...register("defaultDueDays")} />
           </Field>
         </div>
         <Field
