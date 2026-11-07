@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "facturacion",
+  "name": "lucho-invoice",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -13,8 +13,7 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      // Reemplazar por el id real tras `wrangler hyperdrive create` (ver README)
-      "id": "00000000000000000000000000000000",
+      "id": "c759baa4b2d847b89c7e3cb1a6f1b249",
       "localConnectionString": "postgres://facturacion:facturacion@localhost:5432/facturacion"
     }
   ],

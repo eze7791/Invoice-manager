@@ -53,12 +53,12 @@ npm run db:generate    # nueva migración tras cambiar el esquema
 
 ## Despliegue (Cloudflare + Neon)
 
-1. Crear una base de datos gratuita en [Neon](https://neon.tech) y copiar su cadena de conexión.
+1. Crear una base de datos gratuita en [Neon](https://neon.tech) y copiar su cadena de conexión **sin pooling** (Hyperdrive hace el pooling). Si incluye `channel_binding=require`, quitarlo.
 2. Aplicar migraciones contra Neon: `DATABASE_URL=<neon> npm run db:migrate`.
 3. Crear el usuario: `DATABASE_URL=<neon> npm run create-user -- ...`.
 4. En `apps/api`:
    ```bash
-   npx wrangler hyperdrive create facturacion-db --connection-string="<neon>"
+   npx wrangler hyperdrive create facturacion-db --connection-string="<neon sin pooling>"
    # copiar el id devuelto en wrangler.jsonc → hyperdrive[0].id
    npx wrangler r2 bucket create facturacion-files
    npx wrangler secret put BETTER_AUTH_SECRET
