@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { InstallHint } from "@/components/install-hint";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,6 +64,8 @@ export function DashboardPage() {
           <Plus /> Nueva factura
         </Button>
       </div>
+
+      <InstallHint />
 
       {profileIncomplete && (
         <Link
