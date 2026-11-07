@@ -1,0 +1,4 @@
+# Copiar a .dev.vars para desarrollo local. En producción: `wrangler secret put <NOMBRE>`.
+# Generar el secreto con: openssl rand -base64 32
+BETTER_AUTH_SECRET=cambiar-por-un-secreto-largo
+BETTER_AUTH_URL=http://localhost:5173

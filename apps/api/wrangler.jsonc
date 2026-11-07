@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "facturacion",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Un solo Worker: sirve la web (Vite build) y responde /api/*
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Reemplazar por el id real tras `wrangler hyperdrive create` (ver README)
+      "id": "00000000000000000000000000000000",
+      "localConnectionString": "postgres://facturacion:facturacion@localhost:5432/facturacion"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "FILES",
+      "bucket_name": "facturacion-files"
+    }
+  ],
+  "observability": { "enabled": true }
+}
