@@ -14,11 +14,3 @@ export function InvoicesPage() {
   const { data } = useSession();
   return <Placeholder title="Facturas" text={`Hola, ${data?.user.name ?? ""}. Aquí verás tus facturas.`} />;
 }
-
-export function ClientsPage() {
-  return <Placeholder title="Clientes" text="Próximamente: alta, edición y búsqueda de clientes." />;
-}
-
-export function ProfilePage() {
-  return <Placeholder title="Perfil" text="Próximamente: tus datos fiscales, logo y datos de pago." />;
-}

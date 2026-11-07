@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import { createDb } from "./db";
 import { createAuth } from "./lib/auth";
+import { requireIssuer } from "./lib/issuer";
 import { requireUser } from "./lib/session";
+import { clientRoutes } from "./routes/clients";
+import { profileRoutes } from "./routes/profile";
 import type { AppEnv } from "./types";
 
 const app = new Hono<AppEnv>().basePath("/api");
@@ -22,6 +25,12 @@ app.get("/me", requireUser, (c) => {
   const { id, name, email } = c.var.user;
   return c.json({ id, name, email });
 });
+
+// Todo lo que sigue exige sesión y opera sobre el emisor del usuario.
+app.use("/profile/*", requireUser, requireIssuer);
+app.use("/clients/*", requireUser, requireIssuer);
+app.route("/profile", profileRoutes);
+app.route("/clients", clientRoutes);
 
 app.notFound((c) => c.json({ error: "No encontrado" }, 404));
 

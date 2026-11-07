@@ -1,4 +1,4 @@
-import type { Db } from "./db";
+import type { Db, schema } from "./db";
 import type { Auth } from "./lib/auth";
 
 export type Bindings = {
@@ -16,6 +16,7 @@ export type Variables = {
   auth: Auth;
   user: SessionResult["user"];
   session: SessionResult["session"];
+  issuer: typeof schema.issuers.$inferSelect;
 };
 
 export type AppEnv = { Bindings: Bindings; Variables: Variables };

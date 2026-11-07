@@ -1,7 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppLayout } from "@/components/app-layout";
 import { LoginPage } from "@/routes/login";
-import { ClientsPage, InvoicesPage, ProfilePage } from "@/routes/placeholders";
+import { ClientsPage } from "@/routes/clients";
+import { InvoicesPage } from "@/routes/placeholders";
+import { ProfilePage } from "@/routes/profile";
 
 export default function App() {
   return (
