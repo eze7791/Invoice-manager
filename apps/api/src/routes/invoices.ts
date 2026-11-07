@@ -16,6 +16,7 @@ import {
 } from "../services/invoices";
 import { clientDisplayName, getInvoicePdf, invalidatePdf, issuerName, pdfFileName } from "../services/documents";
 import { mailAccountFor, requireAccount, sendMail } from "../services/email";
+import { consume } from "../services/usage";
 import { formatEuroPlain } from "../services/money";
 import type { AppEnv } from "../types";
 import { invoiceDraftSchema, invoiceListQuery, paymentSchema } from "../validation";
@@ -48,26 +49,26 @@ export const invoiceRoutes = new Hono<AppEnv>()
   .post("/:id/issue", idParam, async (c) => {
     const invoice = await issueInvoice(c.var.db, c.var.issuer.id, c.req.valid("param").id);
     // El PDF definitivo se genera y guarda en segundo plano.
-    c.executionCtx.waitUntil(getInvoicePdf(c.var.db, c.env.FILES, c.var.issuer.id, invoice.id).catch(console.error));
+    c.executionCtx.waitUntil(getInvoicePdf(c.var.db, c.var.files, c.var.issuer.id, invoice.id).catch(console.error));
     return c.json({ id: invoice.id });
   })
 
   .post("/:id/pay", idParam, zValidator("json", paymentSchema, validationHook), async (c) => {
     const { id } = c.req.valid("param");
     await markPaid(c.var.db, c.var.issuer.id, id, c.req.valid("json"));
-    await invalidatePdf(c.var.db, c.env.FILES, c.var.issuer.id, id);
+    await invalidatePdf(c.var.db, c.var.files, c.var.issuer.id, id);
     return c.json({ ok: true });
   })
 
   .post("/:id/unpay", idParam, async (c) => {
     const { id } = c.req.valid("param");
     await markUnpaid(c.var.db, c.var.issuer.id, id);
-    await invalidatePdf(c.var.db, c.env.FILES, c.var.issuer.id, id);
+    await invalidatePdf(c.var.db, c.var.files, c.var.issuer.id, id);
     return c.json({ ok: true });
   })
 
   .get("/:id/pdf", idParam, zValidator("query", z.object({ download: z.string().optional() })), async (c) => {
-    const { invoice, bytes } = await getInvoicePdf(c.var.db, c.env.FILES, c.var.issuer.id, c.req.valid("param").id);
+    const { invoice, bytes } = await getInvoicePdf(c.var.db, c.var.files, c.var.issuer.id, c.req.valid("param").id);
     const disposition = c.req.valid("query").download ? "attachment" : "inline";
     return c.body(bytes as Uint8Array<ArrayBuffer>, 200, {
       "Content-Type": "application/pdf",
@@ -88,7 +89,8 @@ export const invoiceRoutes = new Hono<AppEnv>()
       const { id } = c.req.valid("param");
       const { to, message } = c.req.valid("json");
       const account = requireAccount(await mailAccountFor(c.env, c.var.issuer));
-      const { invoice, bytes } = await getInvoicePdf(c.var.db, c.env.FILES, c.var.issuer.id, id);
+      await consume(c.var.db, c.var.issuer.id, "email");
+      const { invoice, bytes } = await getInvoicePdf(c.var.db, c.var.files, c.var.issuer.id, id);
       if (invoice.status !== "emitida") return c.json({ error: "Solo se pueden enviar facturas emitidas." }, 409);
 
       const issuer = invoice.issuer!;

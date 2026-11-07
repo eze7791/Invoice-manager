@@ -19,6 +19,8 @@ export type Variables = {
   user: SessionResult["user"];
   session: SessionResult["session"];
   issuer: typeof schema.issuers.$inferSelect;
+  /** R2 con topes diarios por emisor. */
+  files: R2Bucket;
 };
 
 export type AppEnv = { Bindings: Bindings; Variables: Variables };

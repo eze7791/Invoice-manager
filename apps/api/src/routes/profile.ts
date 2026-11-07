@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { connectMailAccount, disconnectMailAccount, mailAccountFor, requireAccount, sendMail } from "../services/email";
 import { getIssuerByUserId, setIssuerFile, updateProfile, type FileKind } from "../services/profile";
+import { consume } from "../services/usage";
 import { z } from "zod";
 import type { AppEnv } from "../types";
 import { profileSchema } from "../validation";
@@ -42,6 +43,7 @@ export const profileRoutes = new Hono<AppEnv>()
     ),
     async (c) => {
       const { user, password } = c.req.valid("json");
+      await consume(c.var.db, c.var.issuer.id, "email");
       await connectMailAccount(c.var.db, c.env, c.var.issuer.id, user, password);
       const issuer = await getIssuerByUserId(c.var.db, c.var.user.id);
       try {
@@ -69,7 +71,7 @@ export const profileRoutes = new Hono<AppEnv>()
     const kind = c.req.param("kind");
     if (!isFileKind(kind)) return c.json({ error: "No encontrado" }, 404);
     const key = kind === "logo" ? c.var.issuer.logoKey : c.var.issuer.signatureKey;
-    const object = key ? await c.env.FILES.get(key) : null;
+    const object = key ? await c.var.files.get(key) : null;
     if (!object) return c.json({ error: "No encontrado" }, 404);
     return new Response(object.body, {
       headers: {
@@ -90,7 +92,7 @@ export const profileRoutes = new Hono<AppEnv>()
     if (file.size > MAX_IMAGE_BYTES) return c.json({ error: "La imagen supera los 2 MB" }, 400);
 
     const key = `issuers/${c.var.issuer.id}/${kind}`;
-    await c.env.FILES.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
+    await c.var.files.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
     await setIssuerFile(c.var.db, c.var.issuer.id, kind, key);
     return c.json({ ok: true });
   })
@@ -98,7 +100,7 @@ export const profileRoutes = new Hono<AppEnv>()
   .delete("/files/:kind", async (c) => {
     const kind = c.req.param("kind");
     if (!isFileKind(kind)) return c.json({ error: "No encontrado" }, 404);
-    await c.env.FILES.delete(`issuers/${c.var.issuer.id}/${kind}`);
+    await c.var.files.delete(`issuers/${c.var.issuer.id}/${kind}`);
     await setIssuerFile(c.var.db, c.var.issuer.id, kind, null);
     return c.json({ ok: true });
   });

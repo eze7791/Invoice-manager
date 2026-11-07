@@ -9,6 +9,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -285,6 +286,21 @@ export const invoiceEvents = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("invoice_events_invoice_id_idx").on(t.invoiceId)],
+);
+
+/**
+ * Contadores diarios de uso para cortar el consumo antes de salir del plan gratuito.
+ * `scope` es "global" (toda la app) o el id de un emisor (p. ej. emails de su Gmail).
+ */
+export const usageCounters = pgTable(
+  "usage_counters",
+  {
+    scope: text("scope").notNull(),
+    day: date("day").notNull(),
+    kind: text("kind").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.scope, t.day, t.kind] })],
 );
 
 // --- Relaciones ---

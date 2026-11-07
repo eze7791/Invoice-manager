@@ -12,7 +12,7 @@ export const exportRoutes = new Hono<AppEnv>().get(
   async (c) => {
     const { from, to } = c.req.valid("query");
     if (from > to) return c.json({ error: "La fecha inicial es posterior a la final" }, 400);
-    const { zip } = await buildExport(c.var.db, c.env.FILES, c.var.issuer.id, from, to);
+    const { zip } = await buildExport(c.var.db, c.var.files, c.var.issuer.id, from, to);
     return c.body(zip as Uint8Array<ArrayBuffer>, 200, {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="facturas_${from}_${to}.zip"`,
