@@ -34,12 +34,28 @@ export function daysBetween(from: string, to: string) {
 
 type Amounts = { quantity: string | number; unitPrice: string | number; discount?: string | number | null };
 
-const num = (v: string | number | null | undefined) => {
-  try {
-    return new Decimal(v === "" || v == null ? 0 : v);
-  } catch {
-    return new Decimal(0);
+/**
+ * Lee un importe escrito a la española ("60,50", "1.234,56") o con punto ("60.50").
+ * Devuelve NaN si no es un número.
+ */
+export function parseDecimal(value: string | number | null | undefined): number {
+  if (typeof value === "number") return value;
+  let s = (value ?? "").replace(/[\s€%]/g, "");
+  if (s === "") return NaN;
+  if (s.includes(",")) {
+    s = s.replace(/\./g, "").replace(",", "."); // coma decimal: los puntos son de miles
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+    s = s.replace(/\./g, ""); // "1.500" en España son mil quinientos
   }
+  return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+}
+
+/** Número para mostrar en un campo editable, con coma decimal: 60.5 → "60,5". */
+export const toDecimalInput = (value: string | number) => String(Number(value)).replace(".", ",");
+
+const num = (v: string | number | null | undefined) => {
+  const n = parseDecimal(v);
+  return new Decimal(Number.isNaN(n) ? 0 : n);
 };
 
 /** Mismo cálculo que la API, para mostrar los totales mientras se edita. */

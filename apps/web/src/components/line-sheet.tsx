@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { formatEuro, lineTotal } from "@/lib/format";
+import { formatEuro, lineTotal, parseDecimal, toDecimalInput } from "@/lib/format";
 import type { InvoiceLine, SavedService } from "@/lib/types";
 
 type LineValues = { description: string; detail: string; quantity: string; unitPrice: string; discount: string };
@@ -18,9 +18,9 @@ type LineValues = { description: string; detail: string; quantity: string; unitP
 const toValues = (l?: InvoiceLine): LineValues => ({
   description: l?.description ?? "",
   detail: l?.detail ?? "",
-  quantity: l ? String(Number(l.quantity)) : "1",
-  unitPrice: l ? String(Number(l.unitPrice)) : "",
-  discount: l && Number(l.discount) ? String(Number(l.discount)) : "",
+  quantity: l ? toDecimalInput(l.quantity) : "1",
+  unitPrice: l ? toDecimalInput(l.unitPrice) : "",
+  discount: l && Number(l.discount) ? toDecimalInput(l.discount) : "",
 });
 
 /** Alta o edición de un concepto, con atajo a los servicios guardados. */
@@ -64,9 +64,10 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
       id: line?.id ?? crypto.randomUUID(),
       description: v.description.trim(),
       detail: v.detail.trim() || null,
-      quantity: v.quantity || "1",
-      unitPrice: v.unitPrice || "0",
-      discount: v.discount || "0",
+      // Se guardan con punto decimal, que es lo que entiende la API.
+      quantity: String(parseDecimal(v.quantity) || 1),
+      unitPrice: String(parseDecimal(v.unitPrice)),
+      discount: String(parseDecimal(v.discount) || 0),
     };
     if (saveForLater) {
       try {
@@ -79,7 +80,7 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
     onSave(result);
   });
 
-  const positive = (v: string) => v === "" || Number(v) >= 0 || "No puede ser negativo";
+  const positive = (v: string) => v === "" || parseDecimal(v) >= 0 || "Escribe un importe, p. ej. 5,50";
 
   return (
     <form onSubmit={submit} className="grid gap-4" noValidate>
@@ -93,7 +94,7 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
                   type="button"
                   className="py-1 pr-1 pl-3"
                   onClick={() =>
-                    reset({ ...values, description: s.name, detail: s.description ?? "", unitPrice: String(Number(s.unitPrice)) })
+                    reset({ ...values, description: s.name, detail: s.description ?? "", unitPrice: toDecimalInput(s.unitPrice) })
                   }
                 >
                   {s.name} · {formatEuro(s.unitPrice)}
@@ -126,25 +127,25 @@ function LineForm({ line, onSave, onCancel }: { line?: InvoiceLine; onSave: (l: 
         <Field label="Precio (€)" htmlFor="unitPrice" error={errors.unitPrice?.message}>
           <Input
             id="unitPrice"
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="0.01"
+            autoComplete="off"
             placeholder="Ej.: 60,00"
-            {...register("unitPrice", { validate: (v) => (v !== "" && Number(v) >= 0) || "Indica el precio" })}
+            {...register("unitPrice", { validate: (v) => parseDecimal(v) >= 0 || "Escribe el precio, p. ej. 60,50" })}
           />
         </Field>
         <Field label="Cantidad" htmlFor="quantity" error={errors.quantity?.message}>
           <Input
             id="quantity"
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="1"
+            autoComplete="off"
             placeholder="Ej.: 1"
-            {...register("quantity", { validate: (v) => v === "" || Number(v) > 0 || "Mayor que 0" })}
+            {...register("quantity", { validate: (v) => v === "" || parseDecimal(v) > 0 || "Mayor que 0" })}
           />
         </Field>
         <Field label="Descuento (€)" htmlFor="discount" error={errors.discount?.message}>
-          <Input id="discount" type="number" inputMode="decimal" step="0.01" placeholder="Ej.: 0" {...register("discount", { validate: positive })} />
+          <Input id="discount" type="text" inputMode="decimal" autoComplete="off" placeholder="Ej.: 0" {...register("discount", { validate: positive })} />
         </Field>
       </div>
 

@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, ApiError } from "@/lib/api";
-import { addDays, computeTotals, daysBetween, formatEuro, lineTotal, today } from "@/lib/format";
+import { addDays, computeTotals, daysBetween, formatEuro, lineTotal, parseDecimal, today, toDecimalInput } from "@/lib/format";
 import { clientName, initials, type Client, type InvoiceDetail, type InvoiceLine, type PaymentMethod, type Profile } from "@/lib/types";
 
 type Draft = {
@@ -73,7 +73,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
       dueDate: invoice.dueDate,
       operationDate: invoice.operationDate,
       applyIrpf: rate > 0,
-      irpfRate: String(rate > 0 ? rate : Number(profile.defaultIrpfRate)),
+      irpfRate: toDecimalInput(rate > 0 ? rate : profile.defaultIrpfRate),
       paymentMethod: invoice.paymentMethod ?? profile.defaultPaymentMethod,
       notes: invoice.notes ?? "",
       paymentInstructions: invoice.paymentInstructions ?? "",
@@ -89,7 +89,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
     dueDate: addDays(issueDate, profile.defaultDueDays),
     operationDate: null,
     applyIrpf: Number(profile.defaultIrpfRate) > 0,
-    irpfRate: String(Number(profile.defaultIrpfRate)),
+    irpfRate: toDecimalInput(profile.defaultIrpfRate),
     paymentMethod: profile.defaultPaymentMethod,
     notes: "",
     paymentInstructions: profile.paymentInstructions ?? "",
@@ -141,7 +141,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
     issueDate: draft.issueDate,
     dueDate: draft.dueDate,
     operationDate: draft.operationDate,
-    irpfRate: Number(irpfRate),
+    irpfRate: parseDecimal(irpfRate) || 0,
     paymentMethod: draft.paymentMethod,
     notes: draft.notes,
     paymentInstructions: draft.paymentInstructions,
@@ -380,11 +380,9 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
             <div className="relative w-28">
               <Input
                 aria-label="Otro porcentaje de IRPF"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
-                min={0}
-                max={100}
+                autoComplete="off"
                 value={draft.irpfRate}
                 onChange={(e) => set("irpfRate", e.target.value)}
                 className="pr-7"
@@ -437,7 +435,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
           <div className="flex items-baseline justify-between gap-4 sm:justify-start">
             <span className="text-sm text-muted-foreground">
               Base {formatEuro(totals.base)}
-              {draft.applyIrpf && Number(irpfRate) > 0 && <> · IRPF −{formatEuro(totals.irpf)}</>}
+              {draft.applyIrpf && parseDecimal(irpfRate) > 0 && <> · IRPF −{formatEuro(totals.irpf)}</>}
             </span>
             <span className="text-xl font-semibold tabular-nums">{formatEuro(totals.total)}</span>
           </div>

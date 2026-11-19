@@ -33,7 +33,7 @@ const draft = (overrides: Partial<InvoiceDraftInput> = {}): InvoiceDraftInput =>
   invoiceDraftSchema.parse({
     clientId,
     issueDate: "2026-11-07",
-    dueDate: "2026-11-14",
+    dueDate: "2099-12-31", // lejano: el test no debe depender de la fecha de hoy
     irpfRate: 15,
     paymentMethod: "transferencia",
     lines: [{ description: "Sesión de fisioterapia", quantity: 1, unitPrice: 100 }],

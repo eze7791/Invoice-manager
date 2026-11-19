@@ -101,3 +101,18 @@ describe("validación de clientes", () => {
     expect(clientSchema.safeParse({ type: "particular", firstName: "x", nif: "12.12.12" }).success).toBe(false);
   });
 });
+
+describe("importes con coma", () => {
+  it("la API acepta coma o punto decimal", async () => {
+    const { invoiceDraftSchema, profileSchema } = await import("../src/validation");
+    const line = (unitPrice: unknown, discount: unknown = 0) =>
+      invoiceDraftSchema.parse({ irpfRate: "15,5", paymentMethod: "efectivo", lines: [{ description: "x", quantity: "1,5", unitPrice, discount }] });
+    expect(line("60,50").lines[0]).toMatchObject({ unitPrice: 60.5, quantity: 1.5 });
+    expect(line("60.50").lines[0]!.unitPrice).toBe(60.5);
+    expect(line("1.234,56").lines[0]!.unitPrice).toBe(1234.56);
+    expect(line(60.5, "5,25").lines[0]!.discount).toBe(5.25);
+    expect(line("60,50").irpfRate).toBe(15.5);
+    expect(() => line("abc")).toThrow();
+    expect(profileSchema.shape.defaultIrpfRate.parse("7,5")).toBe("7.50");
+  });
+});

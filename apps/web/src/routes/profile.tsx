@@ -18,12 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api } from "@/lib/api";
 import { applyApiError } from "@/lib/form-errors";
+import { toDecimalInput } from "@/lib/format";
 import type { PaymentMethod, Profile } from "@/lib/types";
 
 type FileKind = "logo" | "signature";
 
 type ProfileValues = Omit<Profile, "id" | "hasLogo" | "hasSignature" | "updatedAt" | "defaultIrpfRate" | "mailConnected" | "smtpUser"> & {
-  defaultIrpfRate: number;
+  defaultIrpfRate: string;
 };
 
 const toValues = (p: Profile): ProfileValues => ({
@@ -45,7 +46,7 @@ const toValues = (p: Profile): ProfileValues => ({
   bankAddress: p.bankAddress ?? "",
   paymentInstructions: p.paymentInstructions ?? "",
   defaultPaymentMethod: p.defaultPaymentMethod,
-  defaultIrpfRate: Number(p.defaultIrpfRate),
+  defaultIrpfRate: toDecimalInput(p.defaultIrpfRate),
   vatExemptionText: p.vatExemptionText,
   defaultDueDays: p.defaultDueDays,
   showSignature: p.showSignature,
@@ -245,7 +246,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             error={errors.defaultIrpfRate?.message}
             hint="A particulares se aplica 0 %."
           >
-            <Input id="defaultIrpfRate" placeholder="Ej.: 15" type="number" inputMode="decimal" step="0.01" {...register("defaultIrpfRate")} />
+            <Input id="defaultIrpfRate" placeholder="Ej.: 15" type="text" inputMode="decimal" autoComplete="off" {...register("defaultIrpfRate")} />
           </Field>
           <Field label="Vencimiento (días)" htmlFor="defaultDueDays" error={errors.defaultDueDays?.message}>
             <Input id="defaultDueDays" placeholder="Ej.: 7" type="number" inputMode="numeric" {...register("defaultDueDays")} />

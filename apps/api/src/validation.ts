@@ -31,6 +31,15 @@ const optionalIban = z
   .transform((v) => (v ? v.toUpperCase().replace(/\s/g, "") : null))
   .refine((v) => v === null || /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(v), { message: "IBAN no válido" });
 
+/** Número que también acepta coma decimal ("15,5", "1.234,56"). */
+const decimal = () =>
+  z.preprocess((v) => {
+    if (typeof v !== "string") return v;
+    const s = v.replace(/[\s€%]/g, "");
+    if (s === "") return undefined;
+    return s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s;
+  }, z.coerce.number({ message: "Escribe un número, p. ej. 15 o 15,5" }));
+
 export const profileSchema = z.object({
   firstName: requiredText(),
   lastName: requiredText(),
@@ -53,7 +62,7 @@ export const profileSchema = z.object({
   bankAddress: optionalText(),
   paymentInstructions: optionalText(500),
   defaultPaymentMethod: z.enum(["transferencia", "efectivo"]),
-  defaultIrpfRate: z.coerce.number().min(0).max(100).transform((v) => v.toFixed(2)),
+  defaultIrpfRate: decimal().pipe(z.number().min(0).max(100)).transform((v) => v.toFixed(2)),
   vatExemptionText: requiredText(500),
   defaultDueDays: z.coerce.number().int().min(0).max(365),
   showSignature: z.boolean(),
@@ -92,12 +101,12 @@ export const clientSchema = z
 export type ClientInput = z.infer<typeof clientSchema>;
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Fecha no válida" });
-const amount = (max = 1_000_000) => z.coerce.number().min(0, { message: "No puede ser negativo" }).max(max);
+const amount = (max = 1_000_000) => decimal().pipe(z.number().min(0, { message: "No puede ser negativo" }).max(max));
 
 export const invoiceLineSchema = z.object({
   description: z.string().trim().min(1, { message: "Indica el concepto" }).max(200),
   detail: optionalText(1000),
-  quantity: z.coerce.number().gt(0, { message: "La cantidad debe ser mayor que 0" }).max(100_000),
+  quantity: decimal().pipe(z.number().gt(0, { message: "La cantidad debe ser mayor que 0" }).max(100_000)),
   unitPrice: amount(),
   discount: amount().default(0),
 });
@@ -107,7 +116,7 @@ export const invoiceDraftSchema = z.object({
   issueDate: isoDate.nullish().transform((v) => v ?? null),
   operationDate: isoDate.nullish().transform((v) => v || null),
   dueDate: isoDate.nullish().transform((v) => v || null),
-  irpfRate: z.coerce.number().min(0).max(100),
+  irpfRate: decimal().pipe(z.number().min(0).max(100)),
   paymentMethod: z.enum(["transferencia", "efectivo"]),
   notes: optionalText(2000),
   paymentInstructions: optionalText(500),
