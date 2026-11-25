@@ -195,7 +195,7 @@ export const invoiceSeries = pgTable(
       .notNull()
       .references(() => issuers.id, { onDelete: "cascade" }),
     code: text("code").notNull(), // "" para ordinarias, "R" para rectificativas
-    year: integer("year").notNull(),
+    year: integer("year").notNull(), // 0 = contador único sin año (el que se usa)
     nextNumber: integer("next_number").notNull().default(1),
   },
   (t) => [uniqueIndex("invoice_series_unique").on(t.issuerId, t.code, t.year)],
@@ -214,7 +214,9 @@ export const invoices = pgTable(
     // Numeración (null mientras es borrador)
     seriesCode: text("series_code"),
     seriesYear: integer("series_year"),
-    number: integer("number"),
+    number: integer("number"), // parte numérica del número, para ordenar y para el contador
+    // Número visible de la factura (texto libre, editable). Único por emisor.
+    numberLabel: text("number_label"),
     // Rectificativa: factura que corrige
     rectifiesId: uuid("rectifies_id").references((): AnyPgColumn => invoices.id),
     rectificationReason: text("rectification_reason"),
@@ -250,9 +252,10 @@ export const invoices = pgTable(
   (t) => [
     index("invoices_issuer_id_idx").on(t.issuerId),
     index("invoices_client_id_idx").on(t.clientId),
-    uniqueIndex("invoices_number_unique")
-      .on(t.issuerId, t.seriesCode, t.seriesYear, t.number)
-      .where(sql`${t.number} is not null`),
+    uniqueIndex("invoices_number_label_unique")
+      .on(t.issuerId, sql`lower(${t.numberLabel})`)
+      // Solo entre emitidas: un borrador puede llevar un número provisional; se comprueba al emitir.
+      .where(sql`${t.numberLabel} is not null and ${t.status} = 'emitida'`),
   ],
 );
 

@@ -49,7 +49,7 @@ describe("PDF", () => {
   it("guarda el PDF de una factura emitida y lo reutiliza; se regenera al invalidarlo", async () => {
     const issued = await issueInvoice(db, issuerId, (await createDraft(db, issuerId, draft())).id);
     const first = await getInvoicePdf(db, r2.bucket, issuerId, issued.id);
-    expect((await PDFDocument.load(first.bytes)).getTitle()).toBe("FACTURA 2026-0001");
+    expect((await PDFDocument.load(first.bytes)).getTitle()).toBe("FACTURA 1");
     expect(r2.store.size).toBe(1);
 
     const [row] = await db.select().from(schema.invoices).where(eq(schema.invoices.id, issued.id));
@@ -76,8 +76,8 @@ describe("exportación", () => {
 
     const files = unzipSync(zip);
     expect(Object.keys(files).sort()).toEqual([
-      "facturas/Factura-2026-0001.pdf",
-      "facturas/Factura-rectificativa-R2026-0001.pdf",
+      "facturas/Factura-1.pdf",
+      "facturas/Factura-rectificativa-R-1.pdf",
       "resumen_2026-11-01_2026-11-30.csv",
     ]);
 
@@ -86,8 +86,8 @@ describe("exportación", () => {
     const [header, first, second] = strFromU8(csvBytes.slice(3)).trim().split("\r\n");
     expect(header).toMatch(/^Número;Tipo;Fecha;/);
     expect(first).toBe(
-      "2026-0001;Ordinaria;03/11/2026;;Clínica Ñandú SL;B12345674;100,00;0,00;15,00;15,00;85,00;Pagada;05/11/2026;efectivo;",
+      "1;Ordinaria;03/11/2026;;Clínica Ñandú SL;B12345674;100,00;0,00;15,00;15,00;85,00;Pagada;05/11/2026;efectivo;",
     );
-    expect(second).toMatch(/^R2026-0001;Rectificativa;.*;Impagada;;;2026-0001$/);
+    expect(second).toMatch(/^R-1;Rectificativa;.*;Impagada;;;1$/);
   });
 });

@@ -30,7 +30,7 @@ export async function buildExport(db: Db, files: R2Bucket, issuerId: string, fro
         lte(invoices.issueDate, to),
       ),
     )
-    .orderBy(asc(invoices.seriesCode), asc(invoices.seriesYear), asc(invoices.number));
+    .orderBy(asc(invoices.issueDate), asc(invoices.number), asc(invoices.issuedAt));
 
   const numberById = new Map(rows.map((r) => [r.id, formatInvoiceNumber(r)]));
   const header = [

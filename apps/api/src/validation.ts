@@ -121,6 +121,7 @@ export const invoiceDraftSchema = z.object({
   notes: optionalText(2000),
   paymentInstructions: optionalText(500),
   rectificationReason: optionalText(500),
+  numberLabel: optionalText(40),
   lines: z.array(invoiceLineSchema).max(100),
 });
 

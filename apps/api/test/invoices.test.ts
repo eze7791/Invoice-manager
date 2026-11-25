@@ -5,6 +5,8 @@ import { createClient } from "../src/services/clients";
 import { DomainError } from "../src/services/errors";
 import {
   createDraft,
+  getNumbering,
+  setNextNumber,
   createRectification,
   deleteDraft,
   duplicateInvoice,
@@ -79,18 +81,41 @@ describe("importes", () => {
 });
 
 describe("numeración", () => {
-  it("asigna números correlativos por año al emitir, no al crear el borrador", async () => {
+  it("asigna números correlativos al emitir (un solo contador, sin reiniciar por año)", async () => {
     const a = await createDraft(db, issuerId, draft());
     const b = await createDraft(db, issuerId, draft());
     expect(a.number).toBeNull();
 
     // Se emite primero el segundo borrador: recibe el 1.
-    expect((await issueInvoice(db, issuerId, b.id)).number).toBe(1);
-    expect((await issueInvoice(db, issuerId, a.id)).number).toBe(2);
-    expect((await issueNew({ issueDate: "2027-01-02" })).number).toBe(1);
+    expect((await issueInvoice(db, issuerId, b.id)).numberLabel).toBe("1");
+    expect((await issueInvoice(db, issuerId, a.id)).numberLabel).toBe("2");
+    expect((await issueNew({ issueDate: "2027-01-02" })).numberLabel).toBe("3");
 
     const list = await listInvoices(db, issuerId);
-    expect(list.map((i) => i.number).sort()).toEqual(["2026-0001", "2026-0002", "2027-0001"]);
+    expect(list.map((i) => i.number).sort()).toEqual(["1", "2", "3"]);
+  });
+
+  it("se puede fijar el siguiente número y elegir uno a mano; el contador sigue desde ahí", async () => {
+    await setNextNumber(db, issuerId, 47);
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria" })).suggested).toBe("47");
+    expect((await issueNew()).numberLabel).toBe("47");
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria" })).suggested).toBe("48");
+
+    // Un número mayor hace que el contador continúe desde él.
+    expect((await issueNew({ numberLabel: "60" })).numberLabel).toBe("60");
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria" })).suggested).toBe("61");
+
+    // Uno menor o texto libre se aceptan sin mover el contador.
+    expect((await issueNew({ numberLabel: "50" })).numberLabel).toBe("50");
+    expect((await issueNew({ numberLabel: "A-15" })).numberLabel).toBe("A-15");
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria" })).suggested).toBe("61");
+  });
+
+  it("avisa y no deja repetir un número (sin distinguir mayúsculas)", async () => {
+    await issueNew({ numberLabel: "A-15" });
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria", label: "a-15" })).taken).toBe(true);
+    expect((await getNumbering(db, issuerId, { kind: "ordinaria", label: "A-16" })).taken).toBe(false);
+    await rejects(issueNew({ numberLabel: "a-15" }), /Ya existe una factura con el número a-15/);
   });
 
   it("no repite ni salta números con emisiones simultáneas", async () => {
@@ -152,10 +177,10 @@ describe("rectificativas", () => {
     expect(rect).toMatchObject({ kind: "rectificativa", rectifiesId: original.id, status: "borrador" });
 
     const issued = await issueInvoice(db, issuerId, rect.id);
-    expect(issued).toMatchObject({ seriesCode: "R", number: 1 });
+    expect(issued).toMatchObject({ seriesCode: "R", numberLabel: "R-1" });
 
     const detail = await getInvoiceDetail(db, issuerId, original.id);
-    expect(detail.rectifiedBy.map((r) => r.number)).toEqual(["R2026-0001"]);
+    expect(detail.rectifiedBy.map((r) => r.number)).toEqual(["R-1"]);
     expect(detail.events.map((e) => e.type)).toContain("rectificada");
   });
 

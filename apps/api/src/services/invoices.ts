@@ -18,7 +18,8 @@ export const todayInSpain = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date());
 
 /** `2026-0001` para ordinarias, `R2026-0001` para rectificativas. */
-export function formatInvoiceNumber(inv: Pick<Invoice, "seriesCode" | "seriesYear" | "number">) {
+export function formatInvoiceNumber(inv: Pick<Invoice, "seriesCode" | "seriesYear" | "number" | "numberLabel">) {
+  if (inv.numberLabel) return inv.numberLabel;
   if (inv.number == null || inv.seriesYear == null) return null;
   return `${inv.seriesCode ?? ""}${inv.seriesYear}-${String(inv.number).padStart(4, "0")}`;
 }
@@ -79,6 +80,7 @@ function draftValues(input: InvoiceDraftInput) {
     notes: input.notes,
     paymentInstructions: input.paymentInstructions,
     rectificationReason: input.rectificationReason,
+    numberLabel: input.numberLabel,
     // Los totales del borrador se guardan para mostrarlos en el listado; se recalculan al emitir.
     ...computeTotals(input.lines, input.irpfRate),
   };
@@ -111,6 +113,73 @@ export async function deleteDraft(db: Db, issuerId: string, id: string) {
   const invoice = await findOwned(db, issuerId, id);
   assertDraft(invoice);
   await db.delete(invoices).where(eq(invoices.id, id));
+}
+
+// --- Numeración ---
+
+/** "47" para ordinarias, "R-3" para rectificativas. */
+const suggestedLabel = (code: string, n: number) => (code ? `${code}-${n}` : String(n));
+
+/** Parte numérica de un número de factura ("47", "R-3", "0047"); null si es texto libre. */
+export function numericPart(label: string): number | null {
+  const m = /^(?:R-?)?0*(\d{1,9})$/i.exec(label.trim());
+  return m ? Number(m[1]) : null;
+}
+
+async function lockSeries(conn: Conn, issuerId: string, code: string) {
+  await conn.insert(invoiceSeries).values({ issuerId, code, year: 0 }).onConflictDoNothing();
+  const [series] = await conn
+    .select()
+    .from(invoiceSeries)
+    .where(and(eq(invoiceSeries.issuerId, issuerId), eq(invoiceSeries.code, code), eq(invoiceSeries.year, 0)))
+    .for("update");
+  return series!;
+}
+
+async function labelTaken(conn: Conn, issuerId: string, label: string, exceptId?: string) {
+  const [row] = await conn
+    .select({ id: invoices.id })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.issuerId, issuerId),
+        eq(invoices.status, "emitida"),
+        sql`lower(${invoices.numberLabel}) = lower(${label})`,
+        exceptId ? sql`${invoices.id} <> ${exceptId}` : undefined,
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
+/** Número sugerido para la próxima factura y, si se indica uno, si ya está usado. */
+export async function getNumbering(
+  db: Db,
+  issuerId: string,
+  opts: { kind: "ordinaria" | "rectificativa"; label?: string; exceptId?: string },
+) {
+  const code = opts.kind === "rectificativa" ? "R" : "";
+  const [series] = await db
+    .select({ next: invoiceSeries.nextNumber })
+    .from(invoiceSeries)
+    .where(and(eq(invoiceSeries.issuerId, issuerId), eq(invoiceSeries.code, code), eq(invoiceSeries.year, 0)));
+  const suggested = suggestedLabel(code, series?.next ?? 1);
+  const label = opts.label?.trim();
+  return {
+    suggested,
+    taken: label ? await labelTaken(db, issuerId, label, opts.exceptId) : false,
+  };
+}
+
+/** Fija el siguiente número de la serie ordinaria (p. ej. para continuar la numeración de otra app). */
+export async function setNextNumber(db: Db, issuerId: string, next: number) {
+  await db
+    .insert(invoiceSeries)
+    .values({ issuerId, code: "", year: 0, nextNumber: next })
+    .onConflictDoUpdate({
+      target: [invoiceSeries.issuerId, invoiceSeries.code, invoiceSeries.year],
+      set: { nextNumber: next },
+    });
 }
 
 // --- Emisión ---
@@ -203,16 +272,20 @@ export async function issueInvoice(db: Db, issuerId: string, id: string) {
     const year = Number(issueDate.slice(0, 4));
     const code = invoice.kind === "rectificativa" ? "R" : "";
 
-    await tx.insert(invoiceSeries).values({ issuerId, code, year }).onConflictDoNothing();
-    const [series] = await tx
-      .select()
-      .from(invoiceSeries)
-      .where(and(eq(invoiceSeries.issuerId, issuerId), eq(invoiceSeries.code, code), eq(invoiceSeries.year, year)))
-      .for("update");
+    // Contador único del emisor (sin año). Se bloquea para que dos emisiones no tomen el mismo número.
+    const series = await lockSeries(tx, issuerId, code);
+    const label = invoice.numberLabel?.trim() || suggestedLabel(code, series.nextNumber);
+    if (await labelTaken(tx, issuerId, label, id)) {
+      throw new DomainError(`Ya existe una factura con el número ${label}.`, 409, {
+        numberLabel: `Ya existe una factura con el número ${label}`,
+      });
+    }
+    // Si el número es numérico, el contador sigue desde ahí; si es texto libre, no se mueve.
+    const numeric = numericPart(label);
     await tx
       .update(invoiceSeries)
-      .set({ nextNumber: series!.nextNumber + 1 })
-      .where(eq(invoiceSeries.id, series!.id));
+      .set({ nextNumber: numeric != null ? Math.max(series.nextNumber, numeric + 1) : series.nextNumber })
+      .where(eq(invoiceSeries.id, series.id));
 
     const totals = computeTotals(lines, invoice.irpfRate, invoice.vatRate);
     const [issued] = await tx
@@ -221,7 +294,8 @@ export async function issueInvoice(db: Db, issuerId: string, id: string) {
         status: "emitida",
         seriesCode: code,
         seriesYear: year,
-        number: series!.nextNumber,
+        number: numeric,
+        numberLabel: label,
         issueDate,
         issuedAt: new Date(),
         vatExemptionText: issuer!.vatExemptionText,
@@ -352,7 +426,7 @@ const clientLabel = sql<string>`coalesce(
   ${displayName}
 )`;
 
-const numberLabel = sql<string>`${invoices.seriesCode} || ${invoices.seriesYear} || '-' || lpad(${invoices.number}::text, 4, '0')`;
+const numberLabel = sql<string>`coalesce(${invoices.numberLabel}, ${invoices.seriesCode} || ${invoices.seriesYear} || '-' || lpad(${invoices.number}::text, 4, '0'))`;
 
 export async function listInvoices(db: Db, issuerId: string, query: InvoiceListQuery = {}) {
   const today = todayInSpain();
@@ -386,6 +460,7 @@ export async function listInvoices(db: Db, issuerId: string, query: InvoiceListQ
       seriesCode: invoices.seriesCode,
       seriesYear: invoices.seriesYear,
       number: invoices.number,
+      numberLabel: invoices.numberLabel,
       issueDate: invoices.issueDate,
       dueDate: invoices.dueDate,
       grandTotal: invoices.grandTotal,
@@ -404,9 +479,9 @@ export async function listInvoices(db: Db, issuerId: string, query: InvoiceListQ
       desc(invoices.createdAt),
     );
 
-  return rows.map(({ seriesCode, seriesYear, number, ...r }) => ({
+  return rows.map(({ seriesCode, seriesYear, number, numberLabel, ...r }) => ({
     ...r,
-    number: formatInvoiceNumber({ seriesCode, seriesYear, number }),
+    number: formatInvoiceNumber({ seriesCode, seriesYear, number, numberLabel }),
     paymentStatus: paymentStatus(r.status, r.paidAt, r.dueDate, today),
   }));
 }
@@ -430,7 +505,7 @@ export async function getInvoiceDetail(db: Db, issuerId: string, id: string) {
 
   const relatedIds = [invoice.rectifiesId].filter((v): v is string => !!v);
   const related = await db
-    .select({ id: invoices.id, seriesCode: invoices.seriesCode, seriesYear: invoices.seriesYear, number: invoices.number, status: invoices.status })
+    .select({ id: invoices.id, seriesCode: invoices.seriesCode, seriesYear: invoices.seriesYear, number: invoices.number, numberLabel: invoices.numberLabel, status: invoices.status })
     .from(invoices)
     .where(
       and(

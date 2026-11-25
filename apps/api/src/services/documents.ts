@@ -119,8 +119,9 @@ async function currentExemption(db: Db, issuerId: string) {
   return issuer?.text ?? null;
 }
 
+/** El número es texto libre: se quitan los caracteres que no valen en un nombre de archivo. */
 export const pdfFileName = (invoice: Pick<Detail, "number" | "kind">) =>
-  `${invoice.kind === "rectificativa" ? "Factura-rectificativa" : "Factura"}-${invoice.number ?? "borrador"}.pdf`;
+  `${invoice.kind === "rectificativa" ? "Factura-rectificativa" : "Factura"}-${(invoice.number ?? "borrador").replace(/[^\w.-]+/g, "-")}.pdf`;
 
 /**
  * Devuelve el PDF de la factura. Las emitidas se generan una vez y se guardan en R2

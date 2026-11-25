@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Tag, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { ClientPicker } from "@/components/client-picker";
@@ -38,6 +38,8 @@ type Draft = {
   notes: string;
   paymentInstructions: string;
   rectificationReason: string;
+  /** Número de factura elegido; "" = usar el siguiente sugerido. */
+  numberLabel: string;
   lines: InvoiceLine[];
 };
 
@@ -78,6 +80,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
       notes: invoice.notes ?? "",
       paymentInstructions: invoice.paymentInstructions ?? "",
       rectificationReason: invoice.rectificationReason ?? "",
+      numberLabel: invoice.numberLabel ?? "",
       lines: invoice.lines,
     };
   }
@@ -94,6 +97,7 @@ function initialDraft(profile: Profile, invoice?: InvoiceDetail): Draft {
     notes: "",
     paymentInstructions: profile.paymentInstructions ?? "",
     rectificationReason: "",
+    numberLabel: "",
     lines: [],
   };
 }
@@ -112,6 +116,26 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
   const [savedId, setSavedId] = useState(invoice?.id);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
+
+  // Número: se propone el siguiente de la secuencia y se avisa si el elegido ya existe o no sigue el orden.
+  const typedNumber = useDeferredValue(draft.numberLabel.trim());
+  const { data: numbering } = useQuery({
+    queryKey: ["numbering", draft.kind, typedNumber, savedId],
+    queryFn: () =>
+      api.get<{ suggested: string; taken: boolean }>(
+        `/invoices/numbering?${new URLSearchParams({ kind: draft.kind, label: typedNumber, ...(savedId ? { except: savedId } : {}) })}`,
+      ),
+    placeholderData: (prev) => prev,
+  });
+  const suggested = numbering?.suggested ?? "";
+  useEffect(() => {
+    // Al abrir el editor, el campo aparece con el número sugerido.
+    if (suggested && !draft.numberLabel) setDraft((d) => (d.numberLabel ? d : { ...d, numberLabel: suggested }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggested]);
+  const finalNumber = draft.numberLabel.trim() || suggested;
+  const numberTaken = !!numbering?.taken && typedNumber === draft.numberLabel.trim() && !!typedNumber;
+  const outOfSequence = !numberTaken && !!finalNumber && !!suggested && finalNumber.toLowerCase() !== suggested.toLowerCase();
   const irpfRate = draft.applyIrpf ? draft.irpfRate : "0";
   const totals = computeTotals(draft.lines, irpfRate);
   const dueDays = draft.dueDate ? daysBetween(draft.issueDate, draft.dueDate) : null;
@@ -146,6 +170,8 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
     notes: draft.notes,
     paymentInstructions: draft.paymentInstructions,
     rectificationReason: draft.rectificationReason,
+    // Si coincide con la sugerencia se manda vacío: al emitir se toma el siguiente real.
+    numberLabel: finalNumber.toLowerCase() === suggested.toLowerCase() ? null : finalNumber,
     lines: draft.lines.map((l) => ({
       description: l.description,
       detail: l.detail,
@@ -182,6 +208,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
         }
       }
       await queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      await queryClient.invalidateQueries({ queryKey: ["numbering"] });
       await queryClient.invalidateQueries({ queryKey: ["invoice", id] });
       toast.success(action === "issue" ? "Factura emitida" : "Borrador guardado");
       navigate(`/facturas/${id}`, { replace: true });
@@ -226,7 +253,31 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
         </FormSection>
       )}
 
-      <FormSection title="Fechas" description="El número de factura se asigna al emitir.">
+      <FormSection title="Número y fechas">
+        <Field
+          label="N.º de factura"
+          htmlFor="numberLabel"
+          error={errors.numberLabel || (numberTaken ? `Ya existe una factura con el número ${draft.numberLabel.trim()}` : undefined)}
+          hint={suggested ? `Siguiente en la secuencia: ${suggested}. Puedes cambiarlo si lo necesitas.` : undefined}
+        >
+          <Input
+            id="numberLabel"
+            autoComplete="off"
+            placeholder={suggested ? `Ej.: ${suggested}` : "Ej.: 47"}
+            value={draft.numberLabel}
+            onChange={(e) => {
+              set("numberLabel", e.target.value);
+              setErrors((er) => ({ ...er, numberLabel: "" }));
+            }}
+            aria-invalid={numberTaken || undefined}
+          />
+        </Field>
+        {outOfSequence && (
+          <p className="-mt-2 rounded-md bg-amber-50 p-2.5 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            Este número no sigue la secuencia (el siguiente sería {suggested}). En España las facturas deben ser
+            correlativas: úsalo solo si sabes que es correcto.
+          </p>
+        )}
         <div className="grid items-start gap-4 sm:grid-cols-2">
           <Field label="Fecha de emisión" htmlFor="issueDate">
             <Input
@@ -443,7 +494,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
             <Button variant="outline" disabled={busy} onClick={() => run("save")}>
               Guardar borrador
             </Button>
-            <Button disabled={busy} onClick={() => setConfirmIssue(true)}>
+            <Button disabled={busy || numberTaken} onClick={() => setConfirmIssue(true)}>
               Emitir
             </Button>
           </div>
@@ -461,7 +512,7 @@ function Editor({ profile, invoice }: { profile: Profile; invoice?: InvoiceDetai
       <AlertDialog open={confirmIssue} onOpenChange={setConfirmIssue}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Emitir la factura?</AlertDialogTitle>
+            <AlertDialogTitle>¿Emitir la factura {finalNumber}?</AlertDialogTitle>
             <AlertDialogDescription>
               Se le asignará el siguiente número y ya no se podrá modificar. Si después encuentras un error, tendrás que
               hacer una factura rectificativa.

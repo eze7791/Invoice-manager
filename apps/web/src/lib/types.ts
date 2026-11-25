@@ -121,6 +121,7 @@ export type InvoiceDetail = {
   paymentNote: string | null;
   sentAt: string | null;
   rectificationReason: string | null;
+  numberLabel: string | null;
   client: (Partial<Client> & Pick<Client, "type">) | null;
   lines: InvoiceLine[];
   events: { id: string; type: InvoiceEventType; data: Record<string, unknown> | null; createdAt: string }[];

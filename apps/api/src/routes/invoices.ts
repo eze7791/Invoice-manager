@@ -6,6 +6,7 @@ import {
   createRectification,
   deleteDraft,
   duplicateInvoice,
+  getNumbering,
   getInvoiceDetail,
   issueInvoice,
   listInvoices,
@@ -33,6 +34,18 @@ export const invoiceRoutes = new Hono<AppEnv>()
     const invoice = await createDraft(c.var.db, c.var.issuer.id, c.req.valid("json"));
     return c.json({ id: invoice.id }, 201);
   })
+
+  .get(
+    "/numbering",
+    zValidator(
+      "query",
+      z.object({ kind: z.enum(["ordinaria", "rectificativa"]).default("ordinaria"), label: z.string().max(40).optional(), except: z.uuid().optional() }),
+    ),
+    async (c) => {
+      const { kind, label, except } = c.req.valid("query");
+      return c.json(await getNumbering(c.var.db, c.var.issuer.id, { kind, label, exceptId: except }));
+    },
+  )
 
   .get("/:id", idParam, async (c) => c.json(await getInvoiceDetail(c.var.db, c.var.issuer.id, c.req.valid("param").id)))
 
